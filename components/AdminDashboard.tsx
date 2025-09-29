@@ -6,6 +6,7 @@ import AdminReports from './AdminReports';
 import EditProductModal from './EditProductModal';
 import ConfirmationModal from './ConfirmationModal';
 import { supabase } from '../services/supabase';
+import { LOGO_URL } from '../config';
 import type { Product } from '../types';
 
 interface AdminDashboardProps {
@@ -159,7 +160,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ showToast, handleLogout
       <div className="flex min-h-screen bg-slate-50 text-slate-800">
         <aside className="w-64 flex-shrink-0 bg-white border-r border-slate-200 flex flex-col">
           <div className="h-20 flex items-center justify-center border-b border-slate-200">
-            <img src="https://plqzupgyvcfelpkmdabr.supabase.co/storage/v1/object/public/assets-publicos/logomarca.png" alt="Mix Magazine Logo" className="h-12" />
+            <img src={LOGO_URL} alt="Mix Magazine Logo" className="h-12" />
           </div>
           <nav className="flex-grow pt-6">
             <ul className="space-y-2">

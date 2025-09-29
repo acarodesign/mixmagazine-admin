@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { supabase } from '../services/supabase';
+import { LOGO_URL, FACADE_URL } from '../config';
 
 interface LoginProps {
   showToast: (message: string, type: 'success' | 'error') => void;
@@ -41,18 +42,28 @@ const Login: React.FC<LoginProps> = ({ showToast, onSwitchToSignUp }) => {
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-slate-50 p-4">
-        <div className="max-w-sm w-full bg-white p-8 rounded-2xl shadow-md border border-slate-200 space-y-6 animate-fade-in-up">
-            
+    <div className="relative min-h-screen w-full flex items-center justify-center p-4 overflow-hidden">
+      {/* Background Image & Overlay */}
+      <div className="absolute inset-0 z-0">
+        <img
+          src={FACADE_URL}
+          alt="Fachada da loja MixMagazine"
+          className="w-full h-full object-cover bg-ken-burns"
+        />
+        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+      </div>
+      
+      {/* Form Card */}
+      <div className="relative z-10 max-w-sm w-full bg-white/90 backdrop-blur-lg p-8 rounded-2xl shadow-xl border border-white/20 space-y-6 animate-fade-in-up">
             <div className="flex justify-center">
-                <img src="https://plqzupgyvcfelpkmdabr.supabase.co/storage/v1/object/public/assets-publicos/logomarca.png" alt="MixMagazine Logo" className="h-12" />
+                <img src={LOGO_URL} alt="MixMagazine Logo" className="h-12" />
             </div>
 
-            <div className="flex justify-center space-x-8 border-b border-slate-200 pb-4">
+            <div className="flex justify-center space-x-8 border-b border-slate-200/50 pb-4">
                 <h1 className="text-xl font-bold text-slate-800 border-b-2 border-green-500 pb-3 px-4">LOGAR</h1>
                 <button 
                   onClick={onSwitchToSignUp} 
-                  className="text-xl font-bold text-slate-400 hover:text-slate-800 transition pb-3 px-4"
+                  className="text-xl font-bold text-slate-500 hover:text-slate-800 transition pb-3 px-4"
                 >
                   REGISTRAR
                 </button>
@@ -69,7 +80,7 @@ const Login: React.FC<LoginProps> = ({ showToast, onSwitchToSignUp }) => {
                         type="email"
                         autoComplete="email"
                         required
-                        className="appearance-none relative block w-full px-4 py-3 border border-slate-300 bg-slate-100 placeholder-slate-400 text-slate-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm transition-all duration-300"
+                        className="appearance-none relative block w-full px-4 py-3 border border-slate-300 bg-slate-100/80 placeholder-slate-500 text-slate-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm transition-all duration-300"
                         placeholder="seu@email.com"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
@@ -87,7 +98,7 @@ const Login: React.FC<LoginProps> = ({ showToast, onSwitchToSignUp }) => {
                             type={showPassword ? 'text' : 'password'}
                             autoComplete="current-password"
                             required
-                            className="appearance-none relative block w-full px-4 py-3 border border-slate-300 bg-slate-100 placeholder-slate-400 text-slate-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm transition-all duration-300 pr-10"
+                            className="appearance-none relative block w-full px-4 py-3 border border-slate-300 bg-slate-100/80 placeholder-slate-500 text-slate-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm transition-all duration-300 pr-10"
                             placeholder="••••••••"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}

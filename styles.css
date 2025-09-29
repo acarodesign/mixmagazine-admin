@@ -29,18 +29,21 @@ body {
   background-color: #94a3b8; /* slate-400 */
 }
 
-/* Animações (mantidas) */
+/* Animações (mantidas e melhoradas) */
 @keyframes ken-burns {
   0% {
-    transform: scale(1) translate(0, 0);
+    transform: scale(1.05) translate(0, 0);
+  }
+  50% {
+    transform: scale(1.15) translate(-1%, 1%);
   }
   100% {
-    transform: scale(1.1) translate(-2%, 2%);
+    transform: scale(1.05) translate(0, 0);
   }
 }
 
 .bg-ken-burns {
-    animation: ken-burns 20s ease-out forwards;
+    animation: ken-burns 40s ease-in-out infinite;
 }
 
 @keyframes fadeInUp {
