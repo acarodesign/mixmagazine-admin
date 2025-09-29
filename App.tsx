@@ -99,8 +99,16 @@ const App: React.FC = () => {
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) {
-      showToast('Erro ao sair.', 'error');
+      // Mesmo com erro (como o 403 Forbidden), forçamos o logout no lado do cliente 
+      // para não travar a UI em um estado inconsistente ("Finalizando configuração...").
+      // O erro sugere um problema de permissão (RLS) que deve ser corrigido no Supabase,
+      // mas a UI precisa continuar funcionando.
+      showToast('Erro no servidor ao sair, mas você foi desconectado localmente.', 'error');
     }
+    
+    // Independentemente do sucesso da API, limpamos o estado local para deslogar o usuário.
+    // Isso garante que o usuário seja sempre redirecionado para a tela de login.
+    setSession(null);
     setProfile(null);
     setShowSignUp(false);
   };
