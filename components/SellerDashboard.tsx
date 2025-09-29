@@ -14,6 +14,11 @@ interface SellerDashboardProps {
 
 type SellerTab = 'catalog' | 'orders';
 
+const MenuIcon = ({ className }: { className?: string }) => (
+  <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+  </svg>
+);
 const CatalogIcon = ({ className }: { className?: string }) => (
   <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
@@ -37,6 +42,8 @@ const SellerDashboard: React.FC<SellerDashboardProps> = ({ showToast, handleLogo
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [activeTab, setActiveTab] = useState<SellerTab>('catalog');
   const [zoomedImageUrl, setZoomedImageUrl] = useState<string | null>(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
 
   const fetchProducts = useCallback(async () => {
     setLoadingProducts(true);
@@ -58,6 +65,11 @@ const SellerDashboard: React.FC<SellerDashboardProps> = ({ showToast, handleLogo
       fetchProducts();
     }
   }, [fetchProducts, activeTab]);
+  
+  const handleTabChange = (tab: SellerTab) => {
+    setActiveTab(tab);
+    setIsSidebarOpen(false); // Fecha a sidebar ao selecionar um item no mobile
+  }
 
   const handleAddToCart = (product: Product) => {
     const quantityPerBox = product.quantity_per_box || 1;
@@ -176,17 +188,25 @@ const SellerDashboard: React.FC<SellerDashboardProps> = ({ showToast, handleLogo
 
   return (
     <>
-      <div className="flex min-h-screen bg-slate-50 text-slate-800">
-        <aside className="w-64 flex-shrink-0 bg-white border-r border-slate-200 flex flex-col">
-          <div className="h-20 flex items-center justify-center border-b border-slate-200">
+      <div className="relative min-h-screen lg:flex bg-slate-50 text-slate-800">
+        {isSidebarOpen && (
+            <div 
+              className="fixed inset-0 bg-black/50 z-20 lg:hidden"
+              onClick={() => setIsSidebarOpen(false)}
+            ></div>
+        )}
+        <aside 
+            className={`fixed inset-y-0 left-0 z-30 w-64 bg-white border-r border-slate-200 flex flex-col transform transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:relative lg:translate-x-0 lg:flex-shrink-0`}
+        >
+          <div className="h-20 flex items-center justify-center border-b border-slate-200 flex-shrink-0">
             <img src={LOGO_URL} alt="Mix Magazine Logo" className="h-12" />
           </div>
-          <nav className="flex-grow pt-6">
+          <nav className="flex-grow pt-6 overflow-y-auto">
             <ul className="space-y-2">
               {tabs.map(tab => (
                 <li key={tab.key} className="px-4">
                   <button
-                    onClick={() => setActiveTab(tab.key as SellerTab)}
+                    onClick={() => handleTabChange(tab.key as SellerTab)}
                     className={`
                       w-full flex items-center space-x-3 px-4 py-3 rounded-lg font-semibold text-sm transition-colors duration-200
                       ${activeTab === tab.key
@@ -201,7 +221,7 @@ const SellerDashboard: React.FC<SellerDashboardProps> = ({ showToast, handleLogo
               ))}
             </ul>
           </nav>
-          <div className="p-4 border-t border-slate-200">
+          <div className="p-4 border-t border-slate-200 flex-shrink-0">
              <div className="text-xs text-slate-500 truncate mb-2" title={userEmail}>{userEmail}</div>
              <button
                 onClick={handleLogout}
@@ -213,8 +233,15 @@ const SellerDashboard: React.FC<SellerDashboardProps> = ({ showToast, handleLogo
           </div>
         </aside>
 
-        <main className="flex-grow p-6 md:p-8 overflow-auto">
+        <main className="flex-grow p-6 md:p-8 overflow-y-auto">
           <div className="max-w-7xl mx-auto">
+            <button
+              onClick={() => setIsSidebarOpen(true)}
+              className="lg:hidden p-2 -ml-2 mb-4 text-slate-600 hover:text-slate-900"
+              aria-label="Abrir menu"
+            >
+              <MenuIcon className="h-6 w-6" />
+            </button>
             <h1 className="text-3xl font-bold text-slate-900 mb-2">Catálogo de Vendas B2B</h1>
             <p className="text-slate-500 mb-8">Navegue pelos produtos, monte e gerencie seus pedidos.</p>
             {renderContent()}

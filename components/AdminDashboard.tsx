@@ -17,6 +17,11 @@ interface AdminDashboardProps {
 
 type AdminTab = 'products' | 'orders' | 'reports';
 
+const MenuIcon = ({ className }: { className?: string }) => (
+  <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+  </svg>
+);
 const ProductsIcon = ({ className }: { className?: string }) => (
   <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
@@ -44,6 +49,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ showToast, handleLogout
   const [activeTab, setActiveTab] = useState<AdminTab>('products');
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [productToDelete, setProductToDelete] = useState<{id: string; imageUrls: string[]} | null>(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
 
   const fetchProducts = useCallback(async () => {
@@ -120,6 +126,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ showToast, handleLogout
         showToast(message, 'error');
     }
   };
+  
+  const handleTabChange = (tab: AdminTab) => {
+    setActiveTab(tab);
+    setIsSidebarOpen(false); // Fecha a sidebar ao selecionar um item no mobile
+  }
 
   const renderContent = () => {
     switch(activeTab) {
@@ -157,17 +168,25 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ showToast, handleLogout
 
   return (
     <>
-      <div className="flex min-h-screen bg-slate-50 text-slate-800">
-        <aside className="w-64 flex-shrink-0 bg-white border-r border-slate-200 flex flex-col">
-          <div className="h-20 flex items-center justify-center border-b border-slate-200">
+      <div className="relative min-h-screen lg:flex bg-slate-50 text-slate-800">
+        {isSidebarOpen && (
+          <div 
+            className="fixed inset-0 bg-black/50 z-20 lg:hidden"
+            onClick={() => setIsSidebarOpen(false)}
+          ></div>
+        )}
+        <aside 
+          className={`fixed inset-y-0 left-0 z-30 w-64 bg-white border-r border-slate-200 flex flex-col transform transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:relative lg:translate-x-0 lg:flex-shrink-0`}
+        >
+          <div className="h-20 flex items-center justify-center border-b border-slate-200 flex-shrink-0">
             <img src={LOGO_URL} alt="Mix Magazine Logo" className="h-12" />
           </div>
-          <nav className="flex-grow pt-6">
+          <nav className="flex-grow pt-6 overflow-y-auto">
             <ul className="space-y-2">
               {tabs.map(tab => (
                 <li key={tab.key} className="px-4">
                   <button
-                    onClick={() => setActiveTab(tab.key as AdminTab)}
+                    onClick={() => handleTabChange(tab.key as AdminTab)}
                     className={`
                       w-full flex items-center space-x-3 px-4 py-3 rounded-lg font-semibold text-sm transition-colors duration-200
                       ${activeTab === tab.key
@@ -182,7 +201,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ showToast, handleLogout
               ))}
             </ul>
           </nav>
-          <div className="p-4 border-t border-slate-200">
+          <div className="p-4 border-t border-slate-200 flex-shrink-0">
              <div className="text-xs text-slate-500 truncate mb-2" title={userEmail}>{userEmail}</div>
              <button
                 onClick={handleLogout}
@@ -194,8 +213,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ showToast, handleLogout
           </div>
         </aside>
 
-        <main className="flex-grow p-6 md:p-8 overflow-auto">
+        <main className="flex-grow p-6 md:p-8 overflow-y-auto">
           <div className="max-w-7xl mx-auto">
+            <button
+              onClick={() => setIsSidebarOpen(true)}
+              className="lg:hidden p-2 -ml-2 mb-4 text-slate-600 hover:text-slate-900"
+              aria-label="Abrir menu"
+            >
+              <MenuIcon className="h-6 w-6" />
+            </button>
             <h1 className="text-3xl font-bold text-slate-900 mb-2">Painel do Administrador</h1>
             <p className="text-slate-500 mb-8">Bem-vindo! Gerencie produtos, pedidos e relatórios com facilidade.</p>
             {renderContent()}
