@@ -22,72 +22,21 @@ const App: React.FC = () => {
     setTimeout(() => setToast(null), 5000);
   };
 
+  // Efeito para verificar a sessão inicial e escutar por mudanças
   useEffect(() => {
     setLoading(true);
 
+    const fetchInitialSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setSession(session);
+      setLoading(false);
+    };
+
+    fetchInitialSession();
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        try {
-          setSession(session);
-          setProfile(null); // Reseta o perfil antes de verificar
-
-          if (session?.user) {
-            // Checagem de Admin
-            if (session.user.email === ADMIN_EMAIL) {
-              setProfile({ id: session.user.id, role: 'admin', full_name: 'Admin' });
-              return; // Finaliza a lógica para o admin
-            }
-            
-            // Checagem de Vendedor
-            const { data: profileData, error: profileError } = await supabase
-              .from('profiles')
-              .select('*')
-              .eq('id', session.user.id)
-              .single();
-
-            // Lida com erros potenciais, mas ignora o erro "não encontrado" que é esperado no primeiro login
-            if (profileError && profileError.code !== 'PGRST116') {
-              throw profileError;
-            }
-
-            if (profileData) {
-              // Perfil já existe, define-o
-              setProfile(profileData);
-            } else {
-              // Primeiro login: O perfil não existe, cria a partir dos metadados
-              const { data: { user }, error: userError } = await supabase.auth.getUser();
-              if (userError || !user) {
-                throw new Error('Não foi possível obter os dados do usuário para criar o perfil.');
-              }
-
-              const { full_name, city, telefone } = user.user_metadata;
-              if (full_name) {
-                const { data: newProfile, error: createError } = await supabase
-                  .from('profiles')
-                  .insert({ id: user.id, full_name, city, telefone, role: 'vendedor' })
-                  .select()
-                  .single();
-                
-                if (createError) throw createError;
-                setProfile(newProfile);
-              } else {
-                // Erro crítico: cadastrou mas não tem metadados. Desloga para forçar uma nova tentativa.
-                await supabase.auth.signOut();
-                showToast('Dados de cadastro incompletos. Tente se cadastrar novamente.', 'error');
-              }
-            }
-          }
-        } catch (error) {
-          const message = error instanceof Error ? error.message : 'Ocorreu um erro desconhecido.';
-          showToast(`Erro crítico ao carregar perfil: ${message}. Desconectando por segurança.`, 'error');
-          // Força o logout para evitar um estado inconsistente onde há sessão mas não há perfil
-          await supabase.auth.signOut();
-          setSession(null);
-          setProfile(null);
-        } finally {
-          // Este bloco será executado sempre, garantindo que a tela de carregamento desapareça.
-          setLoading(false);
-        }
+      (_event, session) => {
+        setSession(session);
       }
     );
 
@@ -95,19 +44,70 @@ const App: React.FC = () => {
       subscription?.unsubscribe();
     };
   }, []);
+  
+  // Efeito para buscar o perfil do usuário sempre que a sessão mudar
+  useEffect(() => {
+    if (!session?.user) {
+      setProfile(null);
+      return;
+    }
+
+    const fetchProfile = async () => {
+      try {
+        if (session.user.email === ADMIN_EMAIL) {
+          setProfile({ id: session.user.id, role: 'admin', full_name: 'Admin' });
+          return;
+        }
+
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+
+        if (profileError && profileError.code !== 'PGRST116') {
+          throw profileError;
+        }
+
+        if (profileData) {
+          setProfile(profileData);
+        } else {
+          const { data: { user }, error: userError } = await supabase.auth.getUser();
+          if (userError || !user) {
+            throw new Error('Não foi possível obter os dados do usuário para criar o perfil.');
+          }
+
+          const { full_name, city, telefone } = user.user_metadata;
+          if (full_name) {
+            const { data: newProfile, error: createError } = await supabase
+              .from('profiles')
+              .insert({ id: user.id, full_name, city, telefone, role: 'vendedor' })
+              .select()
+              .single();
+            
+            if (createError) throw createError;
+            setProfile(newProfile);
+          } else {
+            await supabase.auth.signOut();
+            showToast('Dados de cadastro incompletos. Tente se cadastrar novamente.', 'error');
+          }
+        }
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Ocorreu um erro desconhecido.';
+        showToast(`Erro crítico ao carregar perfil: ${message}. Desconectando por segurança.`, 'error');
+        await supabase.auth.signOut();
+      }
+    };
+
+    fetchProfile();
+  }, [session]);
+
 
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) {
-      // Mesmo com erro (como o 403 Forbidden), forçamos o logout no lado do cliente 
-      // para não travar a UI em um estado inconsistente ("Finalizando configuração...").
-      // O erro sugere um problema de permissão (RLS) que deve ser corrigido no Supabase,
-      // mas a UI precisa continuar funcionando.
       showToast('Erro no servidor ao sair, mas você foi desconectado localmente.', 'error');
     }
-    
-    // Independentemente do sucesso da API, limpamos o estado local para deslogar o usuário.
-    // Isso garante que o usuário seja sempre redirecionado para a tela de login.
     setSession(null);
     setProfile(null);
     setShowSignUp(false);
@@ -129,22 +129,20 @@ const App: React.FC = () => {
       return <Login showToast={showToast} onSwitchToSignUp={() => setShowSignUp(true)} />;
     }
 
-    if (profile?.role === 'admin' && session.user.email === ADMIN_EMAIL) {
-      return <AdminDashboard showToast={showToast} handleLogout={handleLogout} userEmail={session.user.email} />;
-    }
-    
-    if (profile?.role === 'vendedor') {
-      return <SellerDashboard showToast={showToast} handleLogout={handleLogout} userEmail={session.user.email} />;
-    }
-
-    // Se a sessão existe mas o perfil ainda não foi definido (está em processo no onAuthStateChange)
-    // mostramos um loading mais específico. Com o novo catch, este estado é menos provável de persistir.
     if (session && !profile) {
        return (
         <div className="flex items-center justify-center min-h-screen bg-slate-50">
           <div className="text-2xl font-semibold text-slate-700">Finalizando configuração...</div>
         </div>
       );
+    }
+
+    if (profile?.role === 'admin') {
+      return <AdminDashboard showToast={showToast} handleLogout={handleLogout} userEmail={session.user.email} />;
+    }
+    
+    if (profile?.role === 'vendedor') {
+      return <SellerDashboard showToast={showToast} handleLogout={handleLogout} userEmail={session.user.email} />;
     }
 
     return (
