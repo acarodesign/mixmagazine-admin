@@ -1,0 +1,5 @@
+{
+  "name": "MixMagazine Admin",
+  "description": "Um painel de administração para gerenciar produtos da loja virtual MixMagazine, construído com React e Supabase.",
+  "requestFramePermissions": []
+}
