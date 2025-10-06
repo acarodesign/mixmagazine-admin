@@ -51,21 +51,47 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ showToast, handleLogout
   const [productToDelete, setProductToDelete] = useState<{id: string; imageUrls: string[]} | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
+  const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [productsPerPage] = useState(1000); // Aumentado para 1000
+  const [totalProducts, setTotalProducts] = useState(0);
+
+  useEffect(() => {
+    const timerId = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+      setCurrentPage(1); 
+    }, 500);
+    return () => clearTimeout(timerId);
+  }, [searchTerm]);
 
   const fetchProducts = useCallback(async () => {
     setLoadingProducts(true);
-    const { data, error } = await supabase
+    const from = (currentPage - 1) * productsPerPage;
+    const to = from + productsPerPage - 1;
+
+    let query = supabase
       .from('produtos')
-      .select('*')
-      .order('created_at', { ascending: false });
+      .select('*', { count: 'exact' });
+
+    if (debouncedSearchTerm) {
+      query = query.or(`name.ilike.%${debouncedSearchTerm}%,codigo.ilike.%${debouncedSearchTerm}%`);
+    }
+
+    const { data, error, count } = await query
+      .order('created_at', { ascending: false })
+      .range(from, to);
 
     if (error) {
       showToast(`Erro ao buscar produtos: ${error.message}`, 'error');
+      setProducts([]);
+      setTotalProducts(0);
     } else {
       setProducts(data as Product[]);
+      setTotalProducts(count || 0);
     }
     setLoadingProducts(false);
-  }, [showToast]);
+  }, [showToast, currentPage, productsPerPage, debouncedSearchTerm]);
 
   useEffect(() => {
     if (activeTab === 'products') {
@@ -129,8 +155,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ showToast, handleLogout
   
   const handleTabChange = (tab: AdminTab) => {
     setActiveTab(tab);
-    setIsSidebarOpen(false); // Fecha a sidebar ao selecionar um item no mobile
+    setIsSidebarOpen(false); 
   }
+  
+  const totalPages = Math.ceil(totalProducts / productsPerPage);
 
   const renderContent = () => {
     switch(activeTab) {
@@ -141,12 +169,24 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ showToast, handleLogout
                         <ProductForm showToast={showToast} onProductAdded={fetchProducts} />
                     </div>
                     <div className="lg:col-span-2">
-                        <ProductList
-                          products={products}
-                          loading={loadingProducts}
-                          onEdit={(product) => setEditingProduct(product)}
-                          onDelete={handleDeleteProduct}
-                        />
+                         <div className="bg-white p-6 rounded-2xl shadow-md border border-slate-200">
+                             <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-4">
+                                <h2 className="text-xl font-bold text-slate-800 whitespace-nowrap">Produtos Cadastrados ({totalProducts})</h2>
+                                 <input
+                                    type="text"
+                                    placeholder="Buscar por nome ou código..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className="appearance-none relative block w-full sm:w-64 px-4 py-2 border border-slate-300 bg-slate-100 placeholder-slate-400 text-slate-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 sm:text-sm transition-all"
+                                />
+                             </div>
+                            <ProductList
+                              products={products}
+                              loading={loadingProducts}
+                              onEdit={(product) => setEditingProduct(product)}
+                              onDelete={handleDeleteProduct}
+                            />
+                        </div>
                     </div>
                 </div>
             );
