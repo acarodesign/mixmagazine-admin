@@ -1,5 +1,4 @@
 
-
 export interface Product {
   id: string;
   codigo: string;
@@ -11,6 +10,7 @@ export interface Product {
   image_urls: string[];
   stock: number;
   created_at: string;
+  parent_product_id?: string | null;
 }
 
 export interface NewProduct {
@@ -22,6 +22,7 @@ export interface NewProduct {
   colors: string[];
   stock: number;
   image_urls: string[];
+  parent_product_id: string | null;
 }
 
 export interface ToastMessage {
@@ -35,7 +36,6 @@ export interface Profile {
   role: 'admin' | 'vendedor';
   city?: string;
   telefone?: string;
-  cpf?: string;
 }
 
 export interface CartItem extends Product {
