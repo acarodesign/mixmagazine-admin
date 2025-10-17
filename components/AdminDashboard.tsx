@@ -51,47 +51,21 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ showToast, handleLogout
   const [productToDelete, setProductToDelete] = useState<{id: string; imageUrls: string[]} | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  const [searchTerm, setSearchTerm] = useState('');
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [productsPerPage] = useState(1000); // Aumentado para 1000
-  const [totalProducts, setTotalProducts] = useState(0);
-
-  useEffect(() => {
-    const timerId = setTimeout(() => {
-      setDebouncedSearchTerm(searchTerm);
-      setCurrentPage(1); 
-    }, 500);
-    return () => clearTimeout(timerId);
-  }, [searchTerm]);
 
   const fetchProducts = useCallback(async () => {
     setLoadingProducts(true);
-    const from = (currentPage - 1) * productsPerPage;
-    const to = from + productsPerPage - 1;
-
-    let query = supabase
+    const { data, error } = await supabase
       .from('produtos')
-      .select('*', { count: 'exact' });
-
-    if (debouncedSearchTerm) {
-      query = query.or(`name.ilike.%${debouncedSearchTerm}%,codigo.ilike.%${debouncedSearchTerm}%`);
-    }
-
-    const { data, error, count } = await query
-      .order('created_at', { ascending: false })
-      .range(from, to);
+      .select('*')
+      .order('created_at', { ascending: false });
 
     if (error) {
       showToast(`Erro ao buscar produtos: ${error.message}`, 'error');
-      setProducts([]);
-      setTotalProducts(0);
     } else {
       setProducts(data as Product[]);
-      setTotalProducts(count || 0);
     }
     setLoadingProducts(false);
-  }, [showToast, currentPage, productsPerPage, debouncedSearchTerm]);
+  }, [showToast]);
 
   useEffect(() => {
     if (activeTab === 'products') {
@@ -137,28 +111,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ showToast, handleLogout
     }
   };
 
-  const handleUpdateProduct = async (updatedProduct: Product) => {
-    const { id, created_at, image_urls, ...updateData } = updatedProduct;
-
-    try {
-        const { error } = await supabase.from('produtos').update(updateData).eq('id', id);
-        if (error) throw error;
-
-        showToast('Produto atualizado com sucesso!', 'success');
-        setEditingProduct(null);
-        fetchProducts();
-    } catch (error) {
-        const message = error instanceof Error ? error.message : 'Ocorreu um erro ao atualizar o produto.';
-        showToast(message, 'error');
-    }
+  const handleProductUpdateSuccess = () => {
+    showToast('Produto atualizado com sucesso!', 'success');
+    setEditingProduct(null);
+    fetchProducts();
   };
   
   const handleTabChange = (tab: AdminTab) => {
     setActiveTab(tab);
-    setIsSidebarOpen(false); 
+    setIsSidebarOpen(false); // Fecha a sidebar ao selecionar um item no mobile
   }
-  
-  const totalPages = Math.ceil(totalProducts / productsPerPage);
 
   const renderContent = () => {
     switch(activeTab) {
@@ -169,24 +131,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ showToast, handleLogout
                         <ProductForm showToast={showToast} onProductAdded={fetchProducts} />
                     </div>
                     <div className="lg:col-span-2">
-                         <div className="bg-white p-6 rounded-2xl shadow-md border border-slate-200">
-                             <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-4">
-                                <h2 className="text-xl font-bold text-slate-800 whitespace-nowrap">Produtos Cadastrados ({totalProducts})</h2>
-                                 <input
-                                    type="text"
-                                    placeholder="Buscar por nome ou código..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="appearance-none relative block w-full sm:w-64 px-4 py-2 border border-slate-300 bg-slate-100 placeholder-slate-400 text-slate-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 sm:text-sm transition-all"
-                                />
-                             </div>
-                            <ProductList
-                              products={products}
-                              loading={loadingProducts}
-                              onEdit={(product) => setEditingProduct(product)}
-                              onDelete={handleDeleteProduct}
-                            />
-                        </div>
+                        <ProductList
+                          products={products}
+                          loading={loadingProducts}
+                          onEdit={(product) => setEditingProduct(product)}
+                          onDelete={handleDeleteProduct}
+                        />
                     </div>
                 </div>
             );
@@ -273,7 +223,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ showToast, handleLogout
         <EditProductModal
           product={editingProduct}
           onClose={() => setEditingProduct(null)}
-          onUpdate={handleUpdateProduct}
+          onUpdateSuccess={handleProductUpdateSuccess}
           showToast={showToast}
         />
       )}

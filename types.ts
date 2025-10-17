@@ -35,6 +35,7 @@ export interface Profile {
   role: 'admin' | 'vendedor';
   city?: string;
   telefone?: string;
+  cpf?: string;
 }
 
 export interface CartItem extends Product {
