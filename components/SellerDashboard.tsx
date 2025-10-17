@@ -4,6 +4,7 @@ import type { Product, CartItem, Order } from '../types';
 import ShoppingCart from './ShoppingCart';
 import SellerOrderHistory from './SellerOrderHistory';
 import ImageZoomModal from './ImageZoomModal';
+import ProductDetailModal from './ProductDetailModal';
 import { LOGO_URL } from '../config';
 
 interface SellerDashboardProps {
@@ -43,7 +44,22 @@ const SellerDashboard: React.FC<SellerDashboardProps> = ({ showToast, handleLogo
   const [activeTab, setActiveTab] = useState<SellerTab>('catalog');
   const [zoomedImageUrl, setZoomedImageUrl] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [viewingProduct, setViewingProduct] = useState<Product | null>(null);
+  const [currentImageIndices, setCurrentImageIndices] = useState<{ [key: string]: number }>({});
 
+  const handlePrevImage = (productId: string, totalImages: number) => {
+    setCurrentImageIndices(prev => ({
+        ...prev,
+        [productId]: ((prev[productId] || 0) - 1 + totalImages) % totalImages
+    }));
+  };
+
+  const handleNextImage = (productId: string, totalImages: number) => {
+    setCurrentImageIndices(prev => ({
+        ...prev,
+        [productId]: ((prev[productId] || 0) + 1) % totalImages
+    }));
+  };
 
   const fetchProducts = useCallback(async () => {
     setLoadingProducts(true);
@@ -133,38 +149,60 @@ const SellerDashboard: React.FC<SellerDashboardProps> = ({ showToast, handleLogo
                             <div className="text-center text-slate-500 py-10">Carregando produtos...</div>
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                                {products.map(product => (
-                                    <div key={product.id} className="bg-white border border-slate-200 rounded-2xl overflow-hidden flex flex-col group shadow-md hover:shadow-lg transition-shadow duration-300">
-                                        <div className="overflow-hidden">
-                                            <img 
-                                              src={product.image_urls[0]} 
-                                              alt={product.name} 
-                                              className="w-full h-56 object-cover cursor-zoom-in transition-transform duration-300 group-hover:scale-110"
-                                              onClick={() => setZoomedImageUrl(product.image_urls[0])}
-                                            />
+                                {products.map(product => {
+                                    const currentImageIndex = currentImageIndices[product.id] || 0;
+                                    const currentImageUrl = product.image_urls[currentImageIndex];
+
+                                    return (
+                                        <div key={product.id} className="bg-white border border-slate-200 rounded-2xl overflow-hidden flex flex-col group shadow-md hover:shadow-lg transition-shadow duration-300">
+                                            <div className="relative overflow-hidden group/image-gallery">
+                                                <img 
+                                                  src={currentImageUrl}
+                                                  alt={product.name} 
+                                                  className="w-full h-56 object-cover cursor-zoom-in transition-transform duration-300 group-hover:scale-110"
+                                                  onClick={() => setZoomedImageUrl(currentImageUrl)}
+                                                />
+                                                {product.image_urls.length > 1 && (
+                                                    <>
+                                                        <button onClick={(e) => { e.stopPropagation(); handlePrevImage(product.id, product.image_urls.length); }} className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/40 text-white w-8 h-8 rounded-full flex items-center justify-center opacity-0 group-hover/image-gallery:opacity-100 transition-opacity z-10 hover:bg-black/60">&lt;</button>
+                                                        <button onClick={(e) => { e.stopPropagation(); handleNextImage(product.id, product.image_urls.length); }} className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/40 text-white w-8 h-8 rounded-full flex items-center justify-center opacity-0 group-hover/image-gallery:opacity-100 transition-opacity z-10 hover:bg-black/60">&gt;</button>
+                                                        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex space-x-1.5 z-10">
+                                                            {product.image_urls.map((_, index) => (
+                                                                <div key={index} className={`w-2 h-2 rounded-full transition-colors ${index === currentImageIndex ? 'bg-white' : 'bg-white/50'}`}></div>
+                                                            ))}
+                                                        </div>
+                                                    </>
+                                                )}
+                                            </div>
+                                            <div className="p-5 flex flex-col flex-grow">
+                                                <h3 className="font-bold text-lg text-slate-800 truncate">{product.name}</h3>
+                                                <p className="text-sm text-slate-500 font-mono">Cód: {product.codigo}</p>
+                                                
+                                                <div className="mt-4 flex justify-between items-center">
+                                                    <span className="font-bold text-2xl text-slate-900">R$ {product.price.toFixed(2)}</span>
+                                                    <span className={`text-xs font-semibold px-2 py-1 rounded-full ${product.stock > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                                                        {product.stock > 0 ? `${product.stock} cx.` : 'Sem estoque'}
+                                                    </span>
+                                                </div>
+                                                <div className="mt-auto pt-4 space-y-2">
+                                                    <button 
+                                                        onClick={() => setViewingProduct(product)}
+                                                        className="w-full py-2.5 px-4 text-sm font-bold rounded-lg text-slate-700 bg-slate-100 hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white focus:ring-slate-300 transition-all duration-300"
+                                                    >
+                                                        Ver Detalhes
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => handleAddToCart(product)}
+                                                        disabled={product.stock === 0}
+                                                        className="w-full py-2.5 px-4 text-sm font-bold rounded-lg text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white focus:ring-green-500 disabled:bg-slate-300 disabled:cursor-not-allowed disabled:transform-none transition-all duration-300 shadow-lg shadow-green-600/20 transform hover:scale-105"
+                                                    >
+                                                        {product.stock > 0 ? (product.quantity_per_box > 1 ? 'Adicionar Caixa' : 'Adicionar ao Pedido') : 'Indisponível'}
+                                                    </button>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div className="p-5 flex flex-col flex-grow">
-                                            <h3 className="font-bold text-lg text-slate-800 truncate">{product.name}</h3>
-                                            <p className="text-sm text-slate-500 font-mono">Cód: {product.codigo}</p>
-                                            
-                                            <div className="mt-4 flex justify-between items-center">
-                                                <span className="font-bold text-2xl text-slate-900">R$ {product.price.toFixed(2)}</span>
-                                                <span className={`text-xs font-semibold px-2 py-1 rounded-full ${product.stock > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                                                    {product.stock > 0 ? `${product.stock} cx.` : 'Sem estoque'}
-                                                </span>
-                                             </div>
-                                             <div className="mt-auto pt-4">
-                                                 <button 
-                                                    onClick={() => handleAddToCart(product)}
-                                                    disabled={product.stock === 0}
-                                                    className="w-full py-2.5 px-4 text-sm font-bold rounded-lg text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white focus:ring-green-500 disabled:bg-slate-300 disabled:cursor-not-allowed disabled:transform-none transition-all duration-300 shadow-lg shadow-green-600/20 transform hover:scale-105"
-                                                >
-                                                    {product.stock > 0 ? (product.quantity_per_box > 1 ? 'Adicionar Caixa' : 'Adicionar ao Pedido') : 'Indisponível'}
-                                                </button>
-                                             </div>
-                                        </div>
-                                    </div>
-                                ))}
+                                    )
+                                })}
                             </div>
                         )}
                     </div>
@@ -251,6 +289,13 @@ const SellerDashboard: React.FC<SellerDashboardProps> = ({ showToast, handleLogo
 
       {zoomedImageUrl && (
         <ImageZoomModal imageUrl={zoomedImageUrl} onClose={() => setZoomedImageUrl(null)} />
+      )}
+      {viewingProduct && (
+        <ProductDetailModal
+          product={viewingProduct}
+          onClose={() => setViewingProduct(null)}
+          onAddToCart={handleAddToCart}
+        />
       )}
     </>
   );
