@@ -111,8 +111,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ showToast, handleLogout
     }
   };
 
-  const handleProductUpdateSuccess = () => {
-    showToast('Produto atualizado com sucesso!', 'success');
+  const handleUpdateSuccess = () => {
     setEditingProduct(null);
     fetchProducts();
   };
@@ -223,7 +222,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ showToast, handleLogout
         <EditProductModal
           product={editingProduct}
           onClose={() => setEditingProduct(null)}
-          onUpdateSuccess={handleProductUpdateSuccess}
+          onUpdate={handleUpdateSuccess}
           showToast={showToast}
         />
       )}
