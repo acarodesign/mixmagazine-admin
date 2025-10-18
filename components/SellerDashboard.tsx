@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../services/supabase';
 import type { Product, CartItem, Order } from '../types';
@@ -15,11 +14,6 @@ interface SellerDashboardProps {
 }
 
 type SellerTab = 'catalog' | 'orders';
-
-interface ProductGroup {
-    parent: Product;
-    children: Product[];
-}
 
 const MenuIcon = ({ className }: { className?: string }) => (
   <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -44,7 +38,7 @@ const LogoutIcon = ({ className }: { className?: string }) => (
 
 
 const SellerDashboard: React.FC<SellerDashboardProps> = ({ showToast, handleLogout, userEmail }) => {
-  const [productGroups, setProductGroups] = useState<ProductGroup[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [activeTab, setActiveTab] = useState<SellerTab>('catalog');
@@ -52,7 +46,6 @@ const SellerDashboard: React.FC<SellerDashboardProps> = ({ showToast, handleLogo
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [viewingProduct, setViewingProduct] = useState<Product | null>(null);
   const [currentImageIndices, setCurrentImageIndices] = useState<{ [key: string]: number }>({});
-  const [activeProductsInGroup, setActiveProductsInGroup] = useState<Record<string, Product>>({});
 
   const handlePrevImage = (productId: string, totalImages: number) => {
     setCurrentImageIndices(prev => ({
@@ -78,34 +71,7 @@ const SellerDashboard: React.FC<SellerDashboardProps> = ({ showToast, handleLogo
     if (error) {
       showToast(`Erro ao buscar produtos: ${error.message}`, 'error');
     } else {
-        const products = data as Product[];
-        const groups: ProductGroup[] = [];
-        const childrenMap = new Map<string, Product[]>();
-
-        // Separa os filhos em um mapa para acesso rápido
-        products.forEach(p => {
-            if (p.parent_product_id) {
-                if (!childrenMap.has(p.parent_product_id)) {
-                    childrenMap.set(p.parent_product_id, []);
-                }
-                childrenMap.get(p.parent_product_id)!.push(p);
-            }
-        });
-
-        // Cria os grupos a partir dos pais
-        const initialActiveProducts: Record<string, Product> = {};
-        products.forEach(p => {
-            if (!p.parent_product_id) {
-                groups.push({
-                    parent: p,
-                    children: childrenMap.get(p.id) || []
-                });
-                initialActiveProducts[p.id] = p; // Define o pai como ativo por padrão
-            }
-        });
-        
-        setProductGroups(groups);
-        setActiveProductsInGroup(initialActiveProducts);
+      setProducts(data as Product[]);
     }
     setLoadingProducts(false);
   }, [showToast]);
@@ -183,27 +149,25 @@ const SellerDashboard: React.FC<SellerDashboardProps> = ({ showToast, handleLogo
                             <div className="text-center text-slate-500 py-10">Carregando produtos...</div>
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                                {productGroups.map(group => {
-                                    const activeProduct = activeProductsInGroup[group.parent.id] || group.parent;
-                                    const allVariations = [group.parent, ...group.children];
-                                    const currentImageIndex = currentImageIndices[activeProduct.id] || 0;
-                                    const currentImageUrl = activeProduct.image_urls[currentImageIndex];
+                                {products.map(product => {
+                                    const currentImageIndex = currentImageIndices[product.id] || 0;
+                                    const currentImageUrl = product.image_urls[currentImageIndex];
 
                                     return (
-                                        <div key={group.parent.id} className="bg-white border border-slate-200 rounded-2xl overflow-hidden flex flex-col group shadow-md hover:shadow-lg transition-shadow duration-300">
+                                        <div key={product.id} className="bg-white border border-slate-200 rounded-2xl overflow-hidden flex flex-col group shadow-md hover:shadow-lg transition-shadow duration-300">
                                             <div className="relative overflow-hidden group/image-gallery">
                                                 <img 
                                                   src={currentImageUrl}
-                                                  alt={activeProduct.name} 
+                                                  alt={product.name} 
                                                   className="w-full h-56 object-cover cursor-zoom-in transition-transform duration-300 group-hover:scale-110"
                                                   onClick={() => setZoomedImageUrl(currentImageUrl)}
                                                 />
-                                                {activeProduct.image_urls.length > 1 && (
+                                                {product.image_urls.length > 1 && (
                                                     <>
-                                                        <button onClick={(e) => { e.stopPropagation(); handlePrevImage(activeProduct.id, activeProduct.image_urls.length); }} className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/40 text-white w-8 h-8 rounded-full flex items-center justify-center opacity-0 group-hover/image-gallery:opacity-100 transition-opacity z-10 hover:bg-black/60">&lt;</button>
-                                                        <button onClick={(e) => { e.stopPropagation(); handleNextImage(activeProduct.id, activeProduct.image_urls.length); }} className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/40 text-white w-8 h-8 rounded-full flex items-center justify-center opacity-0 group-hover/image-gallery:opacity-100 transition-opacity z-10 hover:bg-black/60">&gt;</button>
+                                                        <button onClick={(e) => { e.stopPropagation(); handlePrevImage(product.id, product.image_urls.length); }} className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/40 text-white w-8 h-8 rounded-full flex items-center justify-center opacity-0 group-hover/image-gallery:opacity-100 transition-opacity z-10 hover:bg-black/60">&lt;</button>
+                                                        <button onClick={(e) => { e.stopPropagation(); handleNextImage(product.id, product.image_urls.length); }} className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/40 text-white w-8 h-8 rounded-full flex items-center justify-center opacity-0 group-hover/image-gallery:opacity-100 transition-opacity z-10 hover:bg-black/60">&gt;</button>
                                                         <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex space-x-1.5 z-10">
-                                                            {activeProduct.image_urls.map((_, index) => (
+                                                            {product.image_urls.map((_, index) => (
                                                                 <div key={index} className={`w-2 h-2 rounded-full transition-colors ${index === currentImageIndex ? 'bg-white' : 'bg-white/50'}`}></div>
                                                             ))}
                                                         </div>
@@ -211,49 +175,28 @@ const SellerDashboard: React.FC<SellerDashboardProps> = ({ showToast, handleLogo
                                                 )}
                                             </div>
                                             <div className="p-5 flex flex-col flex-grow">
-                                                <h3 className="font-bold text-lg text-slate-800 truncate" title={group.parent.name}>{group.parent.name}</h3>
-                                                {allVariations.length > 1 && (
-                                                  <div className="mt-2">
-                                                    <p className="text-xs font-semibold text-slate-500 mb-2">Variações:</p>
-                                                    <div className="flex flex-wrap gap-2">
-                                                      {allVariations.map(variation => (
-                                                        <button 
-                                                          key={variation.id}
-                                                          onClick={() => {
-                                                              setActiveProductsInGroup(prev => ({ ...prev, [group.parent.id]: variation }));
-                                                              setCurrentImageIndices(prev => ({...prev, [variation.id]: 0}));
-                                                          }}
-                                                          className={`px-2.5 py-1 text-xs font-semibold rounded-full border transition-colors ${activeProduct.id === variation.id ? 'bg-green-600 text-white border-green-600' : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-100'}`}
-                                                          title={variation.name}
-                                                        >
-                                                          {variation.name.replace(group.parent.name, '').trim() || variation.codigo}
-                                                        </button>
-                                                      ))}
-                                                    </div>
-                                                  </div>
-                                                )}
-
-                                                <p className="text-sm text-slate-500 font-mono mt-3">Cód: {activeProduct.codigo}</p>
+                                                <h3 className="font-bold text-lg text-slate-800 truncate">{product.name}</h3>
+                                                <p className="text-sm text-slate-500 font-mono">Cód: {product.codigo}</p>
                                                 
                                                 <div className="mt-4 flex justify-between items-center">
-                                                    <span className="font-bold text-2xl text-slate-900">R$ {activeProduct.price.toFixed(2)}</span>
-                                                    <span className={`text-xs font-semibold px-2 py-1 rounded-full ${activeProduct.stock > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                                                        {activeProduct.stock > 0 ? `${activeProduct.stock} cx.` : 'Sem estoque'}
+                                                    <span className="font-bold text-2xl text-slate-900">R$ {product.price.toFixed(2)}</span>
+                                                    <span className={`text-xs font-semibold px-2 py-1 rounded-full ${product.stock > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                                                        {product.stock > 0 ? `${product.stock} cx.` : 'Sem estoque'}
                                                     </span>
                                                 </div>
                                                 <div className="mt-auto pt-4 space-y-2">
                                                     <button 
-                                                        onClick={() => setViewingProduct(activeProduct)}
+                                                        onClick={() => setViewingProduct(product)}
                                                         className="w-full py-2.5 px-4 text-sm font-bold rounded-lg text-slate-700 bg-slate-100 hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white focus:ring-slate-300 transition-all duration-300"
                                                     >
                                                         Ver Detalhes
                                                     </button>
                                                     <button 
-                                                        onClick={() => handleAddToCart(activeProduct)}
-                                                        disabled={activeProduct.stock === 0}
+                                                        onClick={() => handleAddToCart(product)}
+                                                        disabled={product.stock === 0}
                                                         className="w-full py-2.5 px-4 text-sm font-bold rounded-lg text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white focus:ring-green-500 disabled:bg-slate-300 disabled:cursor-not-allowed disabled:transform-none transition-all duration-300 shadow-lg shadow-green-600/20 transform hover:scale-105"
                                                     >
-                                                        {activeProduct.stock > 0 ? (activeProduct.quantity_per_box > 1 ? 'Adicionar Caixa' : 'Adicionar ao Pedido') : 'Indisponível'}
+                                                        {product.stock > 0 ? (product.quantity_per_box > 1 ? 'Adicionar Caixa' : 'Adicionar ao Pedido') : 'Indisponível'}
                                                     </button>
                                                 </div>
                                             </div>

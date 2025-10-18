@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../services/supabase';
-import type { NewProduct, Product } from '../types';
+import type { NewProduct } from '../types';
 
 interface ProductFormProps {
   showToast: (message: string, type: 'success' | 'error') => void;
@@ -19,27 +18,6 @@ const ProductForm: React.FC<ProductFormProps> = ({ showToast, onProductAdded }) 
   const [imageFiles, setImageFiles] = useState<FileList | null>(null);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
-  const [parentProducts, setParentProducts] = useState<Product[]>([]);
-  const [selectedParent, setSelectedParent] = useState('');
-
-
-  useEffect(() => {
-    // Carrega produtos que podem ser pais (não são filhos de ninguém)
-    const fetchParentProducts = async () => {
-      const { data, error } = await supabase
-        .from('produtos')
-        .select('id, name, codigo')
-        .is('parent_product_id', null)
-        .order('name', { ascending: true });
-      
-      if (error) {
-        showToast('Erro ao carregar produtos para agrupamento.', 'error');
-      } else {
-        setParentProducts(data as Product[]);
-      }
-    };
-    fetchParentProducts();
-  }, [showToast]);
 
   useEffect(() => {
     if (!imageFiles || imageFiles.length === 0) {
@@ -47,6 +25,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ showToast, onProductAdded }) 
       return;
     }
 
+    // FIX: Cast file to Blob for URL.createObjectURL, as File is a subclass of Blob.
     const newImagePreviews = Array.from(imageFiles).map(file => URL.createObjectURL(file as Blob));
     setImagePreviews(newImagePreviews);
 
@@ -65,7 +44,6 @@ const ProductForm: React.FC<ProductFormProps> = ({ showToast, onProductAdded }) 
     setColors('');
     setStock('');
     setImageFiles(null);
-    setSelectedParent('');
     const fileInput = document.getElementById('imageFiles') as HTMLInputElement;
     if(fileInput) fileInput.value = '';
   };
@@ -88,6 +66,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ showToast, onProductAdded }) 
 
     try {
       const uploadedImageUrls: string[] = [];
+      // FIX: Cast Array.from(imageFiles) to File[] to correctly type `file` inside the loop.
       for (const file of Array.from(imageFiles) as File[]) {
         const fileExt = file.name.split('.').pop();
         const fileName = `${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
@@ -115,7 +94,6 @@ const ProductForm: React.FC<ProductFormProps> = ({ showToast, onProductAdded }) 
         colors: colors.split(',').map(c => c.trim()).filter(Boolean),
         stock: parseInt(stock),
         image_urls: uploadedImageUrls,
-        parent_product_id: selectedParent || null,
       };
 
       const { error: insertError } = await supabase.from('produtos').insert([newProduct]);
@@ -147,20 +125,6 @@ const ProductForm: React.FC<ProductFormProps> = ({ showToast, onProductAdded }) 
     <div className="bg-white p-6 rounded-2xl shadow-md border border-slate-200">
       <h2 className="text-2xl font-bold mb-6 text-slate-800">Adicionar Novo Produto</h2>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label htmlFor="parent_product_id" className="block text-sm font-medium text-slate-600 mb-1">Subgrupo de (Opcional)</label>
-          <select 
-            id="parent_product_id" 
-            value={selectedParent}
-            onChange={e => setSelectedParent(e.target.value)}
-            className="appearance-none relative block w-full px-4 py-3 border border-slate-300 bg-slate-100 placeholder-slate-400 text-slate-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm transition-all duration-300"
-          >
-            <option value="">Nenhum (Produto Principal)</option>
-            {parentProducts.map(p => (
-              <option key={p.id} value={p.id}>{p.name} (Cód: {p.codigo})</option>
-            ))}
-          </select>
-        </div>
         <div>
           <label htmlFor="codigo" className="block text-sm font-medium text-slate-600 mb-1">Código do Produto *</label>
           <input type="text" id="codigo" value={codigo} onChange={e => setCodigo(e.target.value)} required className="appearance-none relative block w-full px-4 py-3 border border-slate-300 bg-slate-100 placeholder-slate-400 text-slate-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm transition-all duration-300" />
