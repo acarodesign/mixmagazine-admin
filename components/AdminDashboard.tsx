@@ -111,9 +111,20 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ showToast, handleLogout
     }
   };
 
-  const handleUpdateSuccess = () => {
-    setEditingProduct(null);
-    fetchProducts();
+  const handleUpdateProduct = async (updatedProduct: Product) => {
+    const { id, created_at, image_urls, ...updateData } = updatedProduct;
+
+    try {
+        const { error } = await supabase.from('produtos').update(updateData).eq('id', id);
+        if (error) throw error;
+
+        showToast('Produto atualizado com sucesso!', 'success');
+        setEditingProduct(null);
+        fetchProducts();
+    } catch (error) {
+        const message = error instanceof Error ? error.message : 'Ocorreu um erro ao atualizar o produto.';
+        showToast(message, 'error');
+    }
   };
   
   const handleTabChange = (tab: AdminTab) => {
@@ -222,7 +233,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ showToast, handleLogout
         <EditProductModal
           product={editingProduct}
           onClose={() => setEditingProduct(null)}
-          onUpdate={handleUpdateSuccess}
+          onUpdate={handleUpdateProduct}
           showToast={showToast}
         />
       )}
