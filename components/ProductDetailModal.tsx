@@ -63,18 +63,12 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product, onClos
           <p className="text-sm text-slate-500 font-mono mb-4">Código: {product.codigo}</p>
           <p className="text-slate-600 mb-6">{product.description || 'Sem descrição detalhada.'}</p>
           
-          <div className="space-y-2 text-sm mb-6 border-t border-slate-200 pt-6">
+          <div className="space-y-4 text-sm mb-6 border-t border-slate-200 pt-6">
             <div className="flex justify-between items-center">
-              <span className="text-slate-500 font-medium">Preço (à vista)</span>
-              <span className="font-bold text-2xl text-slate-900">R$ {product.price.toFixed(2)}</span>
+              <span className="text-slate-500 font-medium">Preço por Unidade</span>
+              <span className="font-bold text-3xl text-slate-900">R$ {product.price.toFixed(2)}</span>
             </div>
-             {product.price_card > 0 &&
-              <div className="flex justify-between items-center">
-                <span className="text-slate-500 font-medium">Preço (cartão)</span>
-                <span className="font-bold text-2xl text-slate-900">R$ {product.price_card.toFixed(2)}</span>
-              </div>
-            }
-             <div className="flex justify-between items-center bg-slate-100 p-3 rounded-lg mt-4">
+             <div className="flex justify-between items-center bg-slate-100 p-3 rounded-lg">
               <span className="text-slate-500 font-medium">Unidades por Caixa</span>
               <span className="font-semibold text-slate-800">{product.quantity_per_box}</span>
             </div>

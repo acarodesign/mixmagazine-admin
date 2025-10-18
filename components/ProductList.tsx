@@ -36,12 +36,7 @@ const ProductList: React.FC<ProductListProps> = ({ products, loading, onEdit, on
                         <h3 className="font-bold text-lg text-green-600">{product.name}</h3>
                         <p className="text-sm text-slate-500 font-mono">Código: {product.codigo}</p>
                     </div>
-                    <div className="text-right ml-4">
-                      <p className="font-bold text-xl text-slate-800">R$ {product.price.toFixed(2)} <span className="text-xs font-normal text-slate-500">à vista</span></p>
-                      {product.price_card > 0 &&
-                        <p className="font-semibold text-base text-slate-600">R$ {product.price_card.toFixed(2)} <span className="text-xs font-normal text-slate-500">cartão</span></p>
-                      }
-                    </div>
+                    <p className="font-bold text-2xl text-slate-800 ml-4 whitespace-nowrap">R$ {product.price.toFixed(2)}</p>
                 </div>
                 <p className="mt-2 text-slate-600 text-sm line-clamp-2">{product.description}</p>
                  <div className="mt-4 flex justify-between items-center">

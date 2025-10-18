@@ -77,11 +77,11 @@ const App: React.FC = () => {
             throw new Error('Não foi possível obter os dados do usuário para criar o perfil.');
           }
 
-          const { full_name, city, telefone, cpf } = user.user_metadata;
+          const { full_name, city, telefone } = user.user_metadata;
           if (full_name) {
             const { data: newProfile, error: createError } = await supabase
               .from('profiles')
-              .insert({ id: user.id, full_name, city, telefone, cpf, role: 'vendedor' })
+              .insert({ id: user.id, full_name, city, telefone, role: 'vendedor' })
               .select()
               .single();
             

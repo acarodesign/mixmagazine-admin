@@ -6,7 +6,6 @@ export interface Product {
   name: string;
   description: string;
   price: number;
-  price_card: number;
   quantity_per_box: number;
   colors: string[];
   image_urls: string[];
@@ -19,7 +18,6 @@ export interface NewProduct {
   name: string;
   description: string;
   price: number;
-  price_card: number;
   quantity_per_box: number;
   colors: string[];
   stock: number;
@@ -75,7 +73,6 @@ export interface Order {
     total_price: number;
     shipping_cost: number | null;
     status: OrderStatus; // Atualizado para usar o tipo
-    payment_method: 'À Vista' | 'Cartão' | null;
     // Campos de endereço
     cep: string | null;
     logradouro: string | null;

@@ -20,7 +20,6 @@ const SignUp: React.FC<SignUpProps> = ({ showToast, onSwitchToLogin }) => {
   const [fullName, setFullName] = useState('');
   const [city, setCity] = useState('');
   const [phone, setPhone] = useState('');
-  const [cpf, setCpf] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -39,7 +38,6 @@ const SignUp: React.FC<SignUpProps> = ({ showToast, onSwitchToLogin }) => {
           full_name: fullName,
           city: city,
           telefone: phone,
-          cpf: cpf,
         },
       },
     });
@@ -116,10 +114,6 @@ const SignUp: React.FC<SignUpProps> = ({ showToast, onSwitchToLogin }) => {
           <div>
               <label htmlFor="phone" className="block text-sm font-medium text-slate-600 mb-1">Telefone</label>
               <input id="phone" name="phone" type="tel" autoComplete="tel" required className="appearance-none relative block w-full px-4 py-3 border border-slate-300 bg-slate-100/80 placeholder-slate-500 text-slate-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm transition-all duration-300" placeholder="Telefone com DDD" value={phone} onChange={(e) => setPhone(e.target.value)} />
-           </div>
-           <div>
-              <label htmlFor="cpf" className="block text-sm font-medium text-slate-600 mb-1">CPF</label>
-              <input id="cpf" name="cpf" type="text" required className="appearance-none relative block w-full px-4 py-3 border border-slate-300 bg-slate-100/80 placeholder-slate-500 text-slate-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm transition-all duration-300" placeholder="000.000.000-00" value={cpf} onChange={(e) => setCpf(e.target.value)} />
            </div>
           <div>
               <label htmlFor="email-address" className="block text-sm font-medium text-slate-600 mb-1">E-mail</label>

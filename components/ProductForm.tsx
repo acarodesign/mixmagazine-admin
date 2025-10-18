@@ -12,7 +12,6 @@ const ProductForm: React.FC<ProductFormProps> = ({ showToast, onProductAdded }) 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
-  const [priceCard, setPriceCard] = useState('');
   const [quantityPerBox, setQuantityPerBox] = useState('');
   const [colors, setColors] = useState('');
   const [stock, setStock] = useState('');
@@ -41,7 +40,6 @@ const ProductForm: React.FC<ProductFormProps> = ({ showToast, onProductAdded }) 
     setName('');
     setDescription('');
     setPrice('');
-    setPriceCard('');
     setQuantityPerBox('');
     setColors('');
     setStock('');
@@ -59,7 +57,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ showToast, onProductAdded }) 
       return;
     }
 
-    if (!codigo.trim() || !name.trim() || !price || !priceCard || !stock || !imageFiles || imageFiles.length === 0) {
+    if (!codigo.trim() || !name.trim() || !price || !stock || !imageFiles || imageFiles.length === 0) {
       showToast('Por favor, preencha todos os campos obrigatórios e selecione pelo menos uma imagem.', 'error');
       return;
     }
@@ -92,7 +90,6 @@ const ProductForm: React.FC<ProductFormProps> = ({ showToast, onProductAdded }) 
         name,
         description,
         price: parseFloat(price),
-        price_card: parseFloat(priceCard),
         quantity_per_box: parseInt(quantityPerBox) || 1,
         colors: colors.split(',').map(c => c.trim()).filter(Boolean),
         stock: parseInt(stock),
@@ -140,15 +137,9 @@ const ProductForm: React.FC<ProductFormProps> = ({ showToast, onProductAdded }) 
           <label htmlFor="description" className="block text-sm font-medium text-slate-600 mb-1">Descrição</label>
           <textarea id="description" value={description} onChange={e => setDescription(e.target.value)} rows={3} className="appearance-none relative block w-full px-4 py-3 border border-slate-300 bg-slate-100 placeholder-slate-400 text-slate-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm transition-all duration-300" />
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label htmlFor="price" className="block text-sm font-medium text-slate-600 mb-1">Preço à Vista (un.) *</label>
-            <input type="number" id="price" value={price} onChange={e => setPrice(e.target.value)} required min="0" step="0.01" className="appearance-none relative block w-full px-4 py-3 border border-slate-300 bg-slate-100 placeholder-slate-400 text-slate-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm transition-all duration-300" />
-          </div>
-          <div>
-            <label htmlFor="priceCard" className="block text-sm font-medium text-slate-600 mb-1">Preço Cartão (un.) *</label>
-            <input type="number" id="priceCard" value={priceCard} onChange={e => setPriceCard(e.target.value)} required min="0" step="0.01" className="appearance-none relative block w-full px-4 py-3 border border-slate-300 bg-slate-100 placeholder-slate-400 text-slate-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm transition-all duration-300" />
-          </div>
+        <div>
+          <label htmlFor="price" className="block text-sm font-medium text-slate-600 mb-1">Preço (unidade) *</label>
+          <input type="number" id="price" value={price} onChange={e => setPrice(e.target.value)} required min="0" step="0.01" className="appearance-none relative block w-full px-4 py-3 border border-slate-300 bg-slate-100 placeholder-slate-400 text-slate-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm transition-all duration-300" />
         </div>
         <div>
           <label htmlFor="stock" className="block text-sm font-medium text-slate-600 mb-1">Estoque (caixas) *</label>

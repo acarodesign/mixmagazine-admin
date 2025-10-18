@@ -15,7 +15,6 @@ const ShoppingCart: React.FC<ShoppingCartProps> = ({ items, setItems, showToast 
     const [isCalculating, setIsCalculating] = useState(false);
     const [orderPlaced, setOrderPlaced] = useState(false);
     const [placingOrder, setPlacingOrder] = useState(false);
-    const [paymentMethod, setPaymentMethod] = useState<'À Vista' | 'Cartão'>('À Vista');
 
     const [address, setAddress] = useState({
         logradouro: '',
@@ -28,11 +27,8 @@ const ShoppingCart: React.FC<ShoppingCartProps> = ({ items, setItems, showToast 
     const [addressFetched, setAddressFetched] = useState(false);
     
     const subtotal = useMemo(() => {
-        return items.reduce((acc, item) => {
-            const price = paymentMethod === 'Cartão' && item.price_card ? item.price_card : item.price;
-            return acc + price * item.quantity;
-        }, 0);
-    }, [items, paymentMethod]);
+        return items.reduce((acc, item) => acc + item.price * item.quantity, 0);
+    }, [items]);
 
     const total = useMemo(() => {
         return subtotal + (selectedShipping?.cost || 0);
@@ -134,7 +130,6 @@ const ShoppingCart: React.FC<ShoppingCartProps> = ({ items, setItems, showToast 
                     total_price: total,
                     shipping_cost: selectedShipping.cost,
                     status: 'Pendente',
-                    payment_method: paymentMethod,
                     cep: cep,
                     logradouro: address.logradouro,
                     numero: address.numero,
@@ -153,7 +148,7 @@ const ShoppingCart: React.FC<ShoppingCartProps> = ({ items, setItems, showToast 
                 pedido_id: orderData.id,
                 produto_id: item.id,
                 quantity: item.quantity,
-                price_at_purchase: paymentMethod === 'Cartão' && item.price_card ? item.price_card : item.price
+                price_at_purchase: item.price
             }));
             
             const { error: itemsError } = await supabase.from('pedido_items').insert(orderItems);
@@ -182,7 +177,6 @@ const ShoppingCart: React.FC<ShoppingCartProps> = ({ items, setItems, showToast 
         setOrderPlaced(false);
         setAddressFetched(false);
         setAddress({ logradouro: '', numero: '', complemento: '', bairro: '', cidade: '', estado: ''});
-        setPaymentMethod('À Vista');
     }
     
     if (orderPlaced) {
@@ -219,14 +213,13 @@ const ShoppingCart: React.FC<ShoppingCartProps> = ({ items, setItems, showToast 
                     {items.map(item => {
                         const quantityPerBox = item.quantity_per_box || 1;
                         const numBoxes = item.quantity / quantityPerBox;
-                        const price = paymentMethod === 'Cartão' && item.price_card ? item.price_card : item.price;
 
                         return (
                             <div key={item.id} className="flex items-start gap-4">
                                 <img src={item.image_urls[0]} alt={item.name} className="w-16 h-16 object-cover rounded-lg" />
                                 <div className="flex-grow">
                                     <h3 className="font-semibold text-slate-800 truncate">{item.name}</h3>
-                                    <p className="text-sm text-slate-500">R$ {price.toFixed(2)} / un.</p>
+                                    <p className="text-sm text-slate-500">R$ {item.price.toFixed(2)} / un.</p>
                                     <div className="flex items-center gap-3 mt-2">
                                         <button onClick={() => handleQuantityChange(item.id, item.quantity - quantityPerBox)} className="w-7 h-7 border border-slate-300 rounded-full text-slate-600 hover:bg-slate-100 transition-colors">-</button>
                                         <div className="text-center leading-tight">
@@ -237,7 +230,7 @@ const ShoppingCart: React.FC<ShoppingCartProps> = ({ items, setItems, showToast 
                                     </div>
                                 </div>
                                 <div className="text-right">
-                                    <p className="font-bold text-slate-800">R$ {(price * item.quantity).toFixed(2)}</p>
+                                    <p className="font-bold text-slate-800">R$ {(item.price * item.quantity).toFixed(2)}</p>
                                     <button onClick={() => handleRemoveItem(item.id)} className="text-xs text-red-500 hover:underline mt-1">Remover</button>
                                 </div>
                             </div>
@@ -247,20 +240,6 @@ const ShoppingCart: React.FC<ShoppingCartProps> = ({ items, setItems, showToast 
             )}
             
             <div className="p-6 border-t border-slate-200 space-y-4 flex-shrink-0 bg-white overflow-y-auto custom-scrollbar rounded-b-2xl">
-                 <div className="space-y-2 pt-2">
-                    <p className="text-sm font-semibold text-slate-600">Forma de Pagamento:</p>
-                    <div className="grid grid-cols-2 gap-2">
-                        <label className={`flex items-center justify-center p-3 rounded-lg cursor-pointer border-2 transition-all ${paymentMethod === 'À Vista' ? 'border-green-500 bg-green-500/10' : 'border-slate-200 bg-slate-100'}`}>
-                            <input type="radio" name="paymentMethod" value="À Vista" checked={paymentMethod === 'À Vista'} onChange={() => setPaymentMethod('À Vista')} className="sr-only" />
-                            <span className="font-semibold text-slate-800 text-sm">À Vista</span>
-                        </label>
-                         <label className={`flex items-center justify-center p-3 rounded-lg cursor-pointer border-2 transition-all ${paymentMethod === 'Cartão' ? 'border-green-500 bg-green-500/10' : 'border-slate-200 bg-slate-100'}`}>
-                            <input type="radio" name="paymentMethod" value="Cartão" checked={paymentMethod === 'Cartão'} onChange={() => setPaymentMethod('Cartão')} className="sr-only" />
-                            <span className="font-semibold text-slate-800 text-sm">Cartão</span>
-                        </label>
-                    </div>
-                </div>
-
                 <div className="flex gap-2">
                     <input type="text" value={cep} onChange={e => setCep(e.target.value)} placeholder="CEP do cliente" className="flex-grow appearance-none relative block w-full px-4 py-3 border border-slate-300 bg-slate-100 placeholder-slate-400 text-slate-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm transition-all duration-300" />
                     <button onClick={handleCepLookup} disabled={isCalculating} className="px-4 py-2 bg-slate-200 text-slate-800 font-semibold rounded-lg hover:bg-slate-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white focus:ring-slate-400 transition-all duration-300 disabled:cursor-wait">
