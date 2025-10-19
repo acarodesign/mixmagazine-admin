@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../services/supabase';
 import type { Product, CartItem, Order } from '../types';
@@ -176,27 +177,33 @@ const SellerDashboard: React.FC<SellerDashboardProps> = ({ showToast, handleLogo
                                             </div>
                                             <div className="p-5 flex flex-col flex-grow">
                                                 <h3 className="font-bold text-lg text-slate-800 truncate">{product.name}</h3>
-                                                <p className="text-sm text-slate-500 font-mono">Cód: {product.codigo}</p>
+                                                {product.subgroup && <p className="text-xs text-slate-500 -mt-1 truncate">{product.subgroup}</p>}
+                                                <p className="text-sm text-slate-500 font-mono mt-1">Código: {product.codigo}</p>
                                                 
-                                                <div className="mt-4 flex justify-between items-center">
-                                                    <span className="font-bold text-2xl text-slate-900">R$ {product.price.toFixed(2)}</span>
-                                                    <span className={`text-xs font-semibold px-2 py-1 rounded-full ${product.stock > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                                                        {product.stock > 0 ? `${product.stock} cx.` : 'Sem estoque'}
-                                                    </span>
+                                                <div className="mt-4 flex justify-between items-baseline">
+                                                    <div>
+                                                        <p className="text-xs text-slate-500">À Vista</p>
+                                                        <p className="font-bold text-lg text-green-600">R$ {product.price_vista.toFixed(2)}</p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-xs text-slate-500">Cartão</p>
+                                                        <p className="font-semibold text-base text-slate-700">R$ {product.price_cartao.toFixed(2)}</p>
+                                                    </div>
                                                 </div>
-                                                <div className="mt-auto pt-4 space-y-2">
+
+                                                <div className="mt-auto pt-4 flex items-center space-x-2">
                                                     <button 
-                                                        onClick={() => setViewingProduct(product)}
-                                                        className="w-full py-2.5 px-4 text-sm font-bold rounded-lg text-slate-700 bg-slate-100 hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white focus:ring-slate-300 transition-all duration-300"
+                                                      onClick={() => handleAddToCart(product)} 
+                                                      disabled={product.stock === 0}
+                                                      className="w-full py-2 px-3 text-sm font-bold rounded-lg text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white focus:ring-green-500 disabled:bg-slate-300 disabled:cursor-not-allowed transition-all duration-300"
                                                     >
-                                                        Ver Detalhes
+                                                      {product.stock > 0 ? 'Adicionar' : 'Indisponível'}
                                                     </button>
                                                     <button 
-                                                        onClick={() => handleAddToCart(product)}
-                                                        disabled={product.stock === 0}
-                                                        className="w-full py-2.5 px-4 text-sm font-bold rounded-lg text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white focus:ring-green-500 disabled:bg-slate-300 disabled:cursor-not-allowed disabled:transform-none transition-all duration-300 shadow-lg shadow-green-600/20 transform hover:scale-105"
+                                                      onClick={() => setViewingProduct(product)}
+                                                      className="flex-shrink-0 py-2 px-3 text-sm font-semibold rounded-lg text-slate-700 bg-slate-200 hover:bg-slate-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white focus:ring-slate-400 transition-all duration-300"
                                                     >
-                                                        {product.stock > 0 ? (product.quantity_per_box > 1 ? 'Adicionar Caixa' : 'Adicionar ao Pedido') : 'Indisponível'}
+                                                      Detalhes
                                                     </button>
                                                 </div>
                                             </div>
@@ -207,7 +214,7 @@ const SellerDashboard: React.FC<SellerDashboardProps> = ({ showToast, handleLogo
                         )}
                     </div>
                     <div className="lg:col-span-1">
-                        <ShoppingCart items={cartItems} setItems={setCartItems} showToast={showToast}/>
+                        <ShoppingCart items={cartItems} setItems={setCartItems} showToast={showToast} />
                     </div>
                 </div>
             );
@@ -220,21 +227,20 @@ const SellerDashboard: React.FC<SellerDashboardProps> = ({ showToast, handleLogo
 
   const tabs = [
     { key: 'catalog', label: 'Catálogo de Produtos', icon: CatalogIcon },
-    { key: 'orders', label: 'Meus Pedidos', icon: MyOrdersIcon }
+    { key: 'orders', label: 'Meus Pedidos', icon: MyOrdersIcon },
   ];
-
 
   return (
     <>
       <div className="relative min-h-screen lg:flex bg-slate-50 text-slate-800">
         {isSidebarOpen && (
-            <div 
-              className="fixed inset-0 bg-black/50 z-20 lg:hidden"
-              onClick={() => setIsSidebarOpen(false)}
-            ></div>
+          <div 
+            className="fixed inset-0 bg-black/50 z-20 lg:hidden"
+            onClick={() => setIsSidebarOpen(false)}
+          ></div>
         )}
         <aside 
-            className={`fixed inset-y-0 left-0 z-30 w-64 bg-white border-r border-slate-200 flex flex-col transform transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:relative lg:translate-x-0 lg:flex-shrink-0`}
+          className={`fixed inset-y-0 left-0 z-30 w-64 bg-white border-r border-slate-200 flex flex-col transform transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:relative lg:translate-x-0 lg:flex-shrink-0`}
         >
           <div className="h-20 flex items-center justify-center border-b border-slate-200 flex-shrink-0">
             <img src={LOGO_URL} alt="Mix Magazine Logo" className="h-12" />
@@ -280,21 +286,21 @@ const SellerDashboard: React.FC<SellerDashboardProps> = ({ showToast, handleLogo
             >
               <MenuIcon className="h-6 w-6" />
             </button>
-            <h1 className="text-3xl font-bold text-slate-900 mb-2">Catálogo de Vendas B2B</h1>
-            <p className="text-slate-500 mb-8">Navegue pelos produtos, monte e gerencie seus pedidos.</p>
+            <h1 className="text-3xl font-bold text-slate-900 mb-2">Painel do Vendedor</h1>
+            <p className="text-slate-500 mb-8">Navegue pelo catálogo, adicione produtos e gerencie seus pedidos.</p>
             {renderContent()}
           </div>
         </main>
       </div>
-
+      
       {zoomedImageUrl && (
         <ImageZoomModal imageUrl={zoomedImageUrl} onClose={() => setZoomedImageUrl(null)} />
       )}
       {viewingProduct && (
-        <ProductDetailModal
-          product={viewingProduct}
-          onClose={() => setViewingProduct(null)}
-          onAddToCart={handleAddToCart}
+        <ProductDetailModal 
+            product={viewingProduct} 
+            onClose={() => setViewingProduct(null)}
+            onAddToCart={handleAddToCart}
         />
       )}
     </>

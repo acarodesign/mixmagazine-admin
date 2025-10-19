@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import type { Product } from '../types';
 import { supabase } from '../services/supabase';
@@ -22,14 +23,14 @@ interface EditProductModalProps {
 }
 
 const EditProductModal: React.FC<EditProductModalProps> = ({ product, onClose, onUpdate, showToast }) => {
-  const [formData, setFormData] = useState({ ...product, colors: product.colors.join(', ') });
+  const [formData, setFormData] = useState({ ...product, colors: product.colors.join(', '), subgroup: product.subgroup || '' });
   const [loading, setLoading] = useState(false);
   const [imagesToDelete, setImagesToDelete] = useState<string[]>([]);
   const [newImageFiles, setNewImageFiles] = useState<FileList | null>(null);
   const [newImagePreviews, setNewImagePreviews] = useState<string[]>([]);
 
   useEffect(() => {
-    setFormData({ ...product, colors: product.colors.join(', ') });
+    setFormData({ ...product, colors: product.colors.join(', '), subgroup: product.subgroup || '' });
     setImagesToDelete([]);
     setNewImageFiles(null);
     setNewImagePreviews([]);
@@ -62,8 +63,8 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ product, onClose, o
     e.preventDefault();
     setLoading(true);
 
-    if (!formData.name.trim() || !formData.price || !formData.stock) {
-        showToast('Nome, Preço e Estoque são campos obrigatórios.', 'error');
+    if (!formData.name.trim() || !formData.price_vista || !formData.price_cartao || !formData.stock) {
+        showToast('Nome, Preços e Estoque são campos obrigatórios.', 'error');
         setLoading(false);
         return;
     }
@@ -104,7 +105,9 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ product, onClose, o
 
         const dataToUpdate: Product = {
             ...formData,
-            price: parseFloat(String(formData.price)),
+            subgroup: formData.subgroup.trim() || undefined,
+            price_vista: parseFloat(String(formData.price_vista)),
+            price_cartao: parseFloat(String(formData.price_cartao)),
             stock: parseInt(String(formData.stock), 10),
             quantity_per_box: parseInt(String(formData.quantity_per_box), 10) || 1,
             colors: formData.colors.split(',').map(c => c.trim()).filter(Boolean),
@@ -147,22 +150,32 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ product, onClose, o
               <input type="text" id="edit-name" name="name" value={formData.name} onChange={handleChange} required className="appearance-none relative block w-full px-4 py-3 border border-slate-300 bg-slate-100 placeholder-slate-400 text-slate-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm transition-all duration-300" />
             </div>
             <div>
+              <label htmlFor="edit-subgroup" className="block text-sm font-medium text-slate-600 mb-1">Subgrupo (Opcional)</label>
+              <input type="text" id="edit-subgroup" name="subgroup" value={formData.subgroup} onChange={handleChange} className="appearance-none relative block w-full px-4 py-3 border border-slate-300 bg-slate-100 placeholder-slate-400 text-slate-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm transition-all duration-300" />
+            </div>
+            <div>
               <label htmlFor="edit-description" className="block text-sm font-medium text-slate-600 mb-1">Descrição</label>
               <textarea id="edit-description" name="description" value={formData.description} onChange={handleChange} rows={3} className="appearance-none relative block w-full px-4 py-3 border border-slate-300 bg-slate-100 placeholder-slate-400 text-slate-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm transition-all duration-300" />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="edit-price" className="block text-sm font-medium text-slate-600 mb-1">Preço (unidade)</label>
-                <input type="number" id="edit-price" name="price" value={formData.price} onChange={handleChange} required min="0" step="0.01" className="appearance-none relative block w-full px-4 py-3 border border-slate-300 bg-slate-100 placeholder-slate-400 text-slate-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm transition-all duration-300" />
+                <label htmlFor="edit-price-vista" className="block text-sm font-medium text-slate-600 mb-1">Preço à Vista</label>
+                <input type="number" id="edit-price-vista" name="price_vista" value={formData.price_vista} onChange={handleChange} required min="0" step="0.01" className="appearance-none relative block w-full px-4 py-3 border border-slate-300 bg-slate-100 placeholder-slate-400 text-slate-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm transition-all duration-300" />
               </div>
+               <div>
+                <label htmlFor="edit-price-cartao" className="block text-sm font-medium text-slate-600 mb-1">Preço Cartão</label>
+                <input type="number" id="edit-price-cartao" name="price_cartao" value={formData.price_cartao} onChange={handleChange} required min="0" step="0.01" className="appearance-none relative block w-full px-4 py-3 border border-slate-300 bg-slate-100 placeholder-slate-400 text-slate-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm transition-all duration-300" />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label htmlFor="edit-stock" className="block text-sm font-medium text-slate-600 mb-1">Estoque (caixas)</label>
                 <input type="number" id="edit-stock" name="stock" value={formData.stock} onChange={handleChange} required min="0" step="1" className="appearance-none relative block w-full px-4 py-3 border border-slate-300 bg-slate-100 placeholder-slate-400 text-slate-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm transition-all duration-300" />
               </div>
-            </div>
-             <div>
+               <div>
                 <label htmlFor="edit-quantityPerBox" className="block text-sm font-medium text-slate-600 mb-1">Quantidade por Caixa</label>
                 <input type="number" id="edit-quantityPerBox" name="quantity_per_box" value={formData.quantity_per_box} onChange={handleChange} min="1" step="1" className="appearance-none relative block w-full px-4 py-3 border border-slate-300 bg-slate-100 placeholder-slate-400 text-slate-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm transition-all duration-300" />
+              </div>
             </div>
             <div>
               <label htmlFor="edit-colors" className="block text-sm font-medium text-slate-600 mb-1">Cores (separadas por vírgula)</label>
@@ -188,7 +201,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ product, onClose, o
                     </div>
                 )}
                  <div>
-                    <label htmlFor="newImageFiles" className="block text-sm font-medium text-slate-600 mb-1">Adicionar Novas Imagens</label>
+                    <label htmlFor="newImageFiles" className="block text-sm font-medium text-slate-600 mb-1">Adicionar Novas Fotos (2 a 3 recomendadas)</label>
                     <input type="file" id="newImageFiles" onChange={e => setNewImageFiles(e.target.files)} multiple className="mt-1 block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-green-100 file:text-green-700 hover:file:bg-green-200 cursor-pointer" />
                 </div>
                  {newImagePreviews.length > 0 && (

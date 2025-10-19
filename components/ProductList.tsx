@@ -1,3 +1,4 @@
+
 import React from 'react';
 import type { Product } from '../types';
 
@@ -34,9 +35,17 @@ const ProductList: React.FC<ProductListProps> = ({ products, loading, onEdit, on
                  <div className="flex justify-between items-start">
                     <div>
                         <h3 className="font-bold text-lg text-green-600">{product.name}</h3>
-                        <p className="text-sm text-slate-500 font-mono">Código: {product.codigo}</p>
+                        {product.subgroup && <p className="text-xs text-slate-500 -mt-1">{product.subgroup}</p>}
+                        <p className="text-sm text-slate-500 font-mono mt-1">Código: {product.codigo}</p>
                     </div>
-                    <p className="font-bold text-2xl text-slate-800 ml-4 whitespace-nowrap">R$ {product.price.toFixed(2)}</p>
+                    <div className="text-right ml-4">
+                        <p className="font-semibold text-lg text-slate-800 whitespace-nowrap">
+                            <span className="text-xs text-slate-500">À Vista:</span> R$ {product.price_vista.toFixed(2)}
+                        </p>
+                        <p className="font-semibold text-lg text-slate-800 whitespace-nowrap">
+                            <span className="text-xs text-slate-500">Cartão:</span> R$ {product.price_cartao.toFixed(2)}
+                        </p>
+                    </div>
                 </div>
                 <p className="mt-2 text-slate-600 text-sm line-clamp-2">{product.description}</p>
                  <div className="mt-4 flex justify-between items-center">

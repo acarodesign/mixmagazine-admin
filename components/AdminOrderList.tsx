@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../services/supabase';
 import type { Order, OrderStatus } from '../types';
@@ -32,7 +33,7 @@ const AdminOrderList: React.FC<AdminOrderListProps> = ({ showToast }) => {
       const { data: ordersData, error: ordersError } = await supabase
         .from('pedidos')
         .select(`
-          id, created_at, total_price, status, user_id,
+          id, created_at, total_price, status, user_id, payment_method,
           cep, logradouro, numero, complemento, bairro, cidade, estado,
           pedido_items ( *, produtos (*) )
         `)
@@ -148,6 +149,9 @@ const AdminOrderList: React.FC<AdminOrderListProps> = ({ showToast }) => {
                 <h3 className="font-bold text-lg text-slate-800">Pedido #{order.id.substring(0, 8)}</h3>
                 <p className="text-sm text-slate-500">{new Date(order.created_at).toLocaleString('pt-BR')}</p>
                 <p className="text-sm text-slate-600">Vendedor: <span className="font-medium text-slate-800">{order.profiles?.full_name || 'Não identificado'}</span></p>
+                {order.payment_method && (
+                    <p className="text-sm text-slate-600">Pagamento: <span className="font-medium text-slate-800 capitalize">{order.payment_method}</span></p>
+                )}
               </div>
               <div className="text-left sm:text-right mt-3 sm:mt-0">
                 <p className="font-bold text-2xl text-slate-900">R$ {order.total_price.toFixed(2)}</p>

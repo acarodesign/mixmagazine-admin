@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../services/supabase';
 import type { NewProduct } from '../types';
@@ -10,8 +11,10 @@ interface ProductFormProps {
 const ProductForm: React.FC<ProductFormProps> = ({ showToast, onProductAdded }) => {
   const [codigo, setCodigo] = useState('');
   const [name, setName] = useState('');
+  const [subgroup, setSubgroup] = useState(''); // NOVO ESTADO
   const [description, setDescription] = useState('');
-  const [price, setPrice] = useState('');
+  const [priceVista, setPriceVista] = useState('');
+  const [priceCartao, setPriceCartao] = useState('');
   const [quantityPerBox, setQuantityPerBox] = useState('');
   const [colors, setColors] = useState('');
   const [stock, setStock] = useState('');
@@ -38,8 +41,10 @@ const ProductForm: React.FC<ProductFormProps> = ({ showToast, onProductAdded }) 
   const resetForm = () => {
     setCodigo('');
     setName('');
+    setSubgroup(''); // LIMPAR SUBGRUPO
     setDescription('');
-    setPrice('');
+    setPriceVista('');
+    setPriceCartao('');
     setQuantityPerBox('');
     setColors('');
     setStock('');
@@ -57,7 +62,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ showToast, onProductAdded }) 
       return;
     }
 
-    if (!codigo.trim() || !name.trim() || !price || !stock || !imageFiles || imageFiles.length === 0) {
+    if (!codigo.trim() || !name.trim() || !priceVista || !priceCartao || !stock || !imageFiles || imageFiles.length === 0) {
       showToast('Por favor, preencha todos os campos obrigatórios e selecione pelo menos uma imagem.', 'error');
       return;
     }
@@ -88,8 +93,10 @@ const ProductForm: React.FC<ProductFormProps> = ({ showToast, onProductAdded }) 
       const newProduct: NewProduct = {
         codigo,
         name,
+        subgroup: subgroup.trim() || undefined, // ADICIONAR SUBGRUPO
         description,
-        price: parseFloat(price),
+        price_vista: parseFloat(priceVista),
+        price_cartao: parseFloat(priceCartao),
         quantity_per_box: parseInt(quantityPerBox) || 1,
         colors: colors.split(',').map(c => c.trim()).filter(Boolean),
         stock: parseInt(stock),
@@ -134,12 +141,22 @@ const ProductForm: React.FC<ProductFormProps> = ({ showToast, onProductAdded }) 
           <input type="text" id="name" value={name} onChange={e => setName(e.target.value)} required className="appearance-none relative block w-full px-4 py-3 border border-slate-300 bg-slate-100 placeholder-slate-400 text-slate-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm transition-all duration-300" />
         </div>
         <div>
+          <label htmlFor="subgroup" className="block text-sm font-medium text-slate-600 mb-1">Subgrupo (Opcional)</label>
+          <input type="text" id="subgroup" value={subgroup} onChange={e => setSubgroup(e.target.value)} placeholder="Ex: Papai Noel Roupa Vermelha" className="appearance-none relative block w-full px-4 py-3 border border-slate-300 bg-slate-100 placeholder-slate-400 text-slate-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm transition-all duration-300" />
+        </div>
+        <div>
           <label htmlFor="description" className="block text-sm font-medium text-slate-600 mb-1">Descrição</label>
           <textarea id="description" value={description} onChange={e => setDescription(e.target.value)} rows={3} className="appearance-none relative block w-full px-4 py-3 border border-slate-300 bg-slate-100 placeholder-slate-400 text-slate-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm transition-all duration-300" />
         </div>
-        <div>
-          <label htmlFor="price" className="block text-sm font-medium text-slate-600 mb-1">Preço (unidade) *</label>
-          <input type="number" id="price" value={price} onChange={e => setPrice(e.target.value)} required min="0" step="0.01" className="appearance-none relative block w-full px-4 py-3 border border-slate-300 bg-slate-100 placeholder-slate-400 text-slate-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm transition-all duration-300" />
+        <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="priceVista" className="block text-sm font-medium text-slate-600 mb-1">Preço à Vista *</label>
+              <input type="number" id="priceVista" value={priceVista} onChange={e => setPriceVista(e.target.value)} required min="0" step="0.01" className="appearance-none relative block w-full px-4 py-3 border border-slate-300 bg-slate-100 placeholder-slate-400 text-slate-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm transition-all duration-300" />
+            </div>
+            <div>
+              <label htmlFor="priceCartao" className="block text-sm font-medium text-slate-600 mb-1">Preço Cartão *</label>
+              <input type="number" id="priceCartao" value={priceCartao} onChange={e => setPriceCartao(e.target.value)} required min="0" step="0.01" className="appearance-none relative block w-full px-4 py-3 border border-slate-300 bg-slate-100 placeholder-slate-400 text-slate-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm transition-all duration-300" />
+            </div>
         </div>
         <div>
           <label htmlFor="stock" className="block text-sm font-medium text-slate-600 mb-1">Estoque (caixas) *</label>
@@ -155,8 +172,9 @@ const ProductForm: React.FC<ProductFormProps> = ({ showToast, onProductAdded }) 
           <input type="text" id="colors" value={colors} onChange={e => setColors(e.target.value)} className="appearance-none relative block w-full px-4 py-3 border border-slate-300 bg-slate-100 placeholder-slate-400 text-slate-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm transition-all duration-300" />
         </div>
         <div>
-          <label htmlFor="imageFiles" className="block text-sm font-medium text-slate-600 mb-1">Imagens do Produto *</label>
+          <label htmlFor="imageFiles" className="block text-sm font-medium text-slate-600 mb-1">Fotos do Produto (2 a 3 recomendadas) *</label>
           <input type="file" id="imageFiles" onChange={e => setImageFiles(e.target.files)} multiple required className="mt-1 block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-green-100 file:text-green-700 hover:file:bg-green-200 cursor-pointer" />
+          <p className="mt-1 text-xs text-slate-500">Você pode selecionar múltiplas imagens de uma vez (segure Ctrl/Cmd para selecionar várias).</p>
         </div>
          {imagePreviews.length > 0 && (
           <div className="mt-4">

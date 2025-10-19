@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../services/supabase';
 import type { Order, OrderStatus } from '../types';
@@ -123,6 +124,9 @@ const SellerOrderHistory: React.FC<SellerOrderHistoryProps> = ({ showToast, onEd
                 <div>
                   <h3 className="font-bold text-lg text-slate-800">Pedido #{order.id.substring(0, 8)}</h3>
                   <p className="text-sm text-slate-500">{new Date(order.created_at).toLocaleString('pt-BR')}</p>
+                  {order.payment_method && (
+                    <p className="text-sm text-slate-600">Pagamento: <span className="font-medium text-slate-800 capitalize">{order.payment_method}</span></p>
+                  )}
                 </div>
                 <div className="text-left sm:text-right mt-3 sm:mt-0">
                   <p className="font-bold text-2xl text-slate-900">R$ {order.total_price.toFixed(2)}</p>

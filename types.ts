@@ -1,27 +1,30 @@
 
-
 export interface Product {
   id: string;
   codigo: string;
   name: string;
   description: string;
-  price: number;
+  price_vista: number; // Alterado de price
+  price_cartao: number; // Novo campo
   quantity_per_box: number;
   colors: string[];
   image_urls: string[];
   stock: number;
   created_at: string;
+  subgroup?: string; // NOVO CAMPO
 }
 
 export interface NewProduct {
   codigo: string;
   name: string;
   description: string;
-  price: number;
+  price_vista: number; // Alterado de price
+  price_cartao: number; // Novo campo
   quantity_per_box: number;
   colors: string[];
   stock: number;
   image_urls: string[];
+  subgroup?: string; // NOVO CAMPO
 }
 
 export interface ToastMessage {
@@ -73,6 +76,7 @@ export interface Order {
     total_price: number;
     shipping_cost: number | null;
     status: OrderStatus; // Atualizado para usar o tipo
+    payment_method: 'vista' | 'cartao' | null; // Novo campo
     // Campos de endereço
     cep: string | null;
     logradouro: string | null;

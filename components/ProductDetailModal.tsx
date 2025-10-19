@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import type { Product } from '../types';
 
@@ -60,13 +61,20 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product, onClos
             <h2 className="text-3xl font-bold text-slate-900">{product.name}</h2>
             <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-3xl transition-colors -mt-2 -mr-2">&times;</button>
           </div>
-          <p className="text-sm text-slate-500 font-mono mb-4">Código: {product.codigo}</p>
-          <p className="text-slate-600 mb-6">{product.description || 'Sem descrição detalhada.'}</p>
+          <p className="text-sm text-slate-500 font-mono">Código: {product.codigo}</p>
+          {product.subgroup && <p className="text-sm text-slate-500 font-mono">Subgrupo: {product.subgroup}</p>}
+          <p className="text-slate-600 mt-4 mb-6">{product.description || 'Sem descrição detalhada.'}</p>
           
           <div className="space-y-4 text-sm mb-6 border-t border-slate-200 pt-6">
-            <div className="flex justify-between items-center">
-              <span className="text-slate-500 font-medium">Preço por Unidade</span>
-              <span className="font-bold text-3xl text-slate-900">R$ {product.price.toFixed(2)}</span>
+            <div className="flex justify-between items-center p-3 rounded-lg bg-green-50 border border-green-200">
+                <div>
+                  <span className="text-green-800 font-medium block">Preço por Unidade (à vista)</span>
+                  <span className="font-bold text-3xl text-green-700">R$ {product.price_vista.toFixed(2)}</span>
+                </div>
+                 <div>
+                  <span className="text-slate-600 font-medium block text-right">Preço (cartão)</span>
+                  <span className="font-semibold text-xl text-slate-800">R$ {product.price_cartao.toFixed(2)}</span>
+                 </div>
             </div>
              <div className="flex justify-between items-center bg-slate-100 p-3 rounded-lg">
               <span className="text-slate-500 font-medium">Unidades por Caixa</span>
