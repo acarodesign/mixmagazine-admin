@@ -112,7 +112,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ showToast, handleLogout
   };
 
   const handleUpdateProduct = async (updatedProduct: Product) => {
-    const { id, created_at, image_urls, ...updateData } = updatedProduct;
+    const { id, created_at, ...updateData } = updatedProduct;
 
     try {
         const { error } = await supabase.from('produtos').update(updateData).eq('id', id);
