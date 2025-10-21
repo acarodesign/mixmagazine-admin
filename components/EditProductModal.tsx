@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import type { Product } from '../types';
 import { supabase } from '../services/supabase';
 
@@ -25,18 +25,27 @@ interface EditProductModalProps {
 const EditProductModal: React.FC<EditProductModalProps> = ({ product, onClose, onUpdate, showToast }) => {
   const [formData, setFormData] = useState({ ...product, colors: product.colors.join(', '), subgroup: product.subgroup || '' });
   const [loading, setLoading] = useState(false);
+  
+  // States for image management
+  const [orderedImages, setOrderedImages] = useState<string[]>([]);
   const [imagesToDelete, setImagesToDelete] = useState<string[]>([]);
   const [newImageFiles, setNewImageFiles] = useState<FileList | null>(null);
   const [newImagePreviews, setNewImagePreviews] = useState<string[]>([]);
 
+  // Refs for drag and drop
+  const draggedItemIndex = useRef<number | null>(null);
+
   useEffect(() => {
+    // Reset state when a new product is passed
     setFormData({ ...product, colors: product.colors.join(', '), subgroup: product.subgroup || '' });
+    setOrderedImages(product.image_urls || []);
     setImagesToDelete([]);
     setNewImageFiles(null);
     setNewImagePreviews([]);
   }, [product]);
 
   useEffect(() => {
+    // Create preview URLs for new images
     if (!newImageFiles || newImageFiles.length === 0) {
       setNewImagePreviews([]);
       return;
@@ -57,6 +66,28 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ product, onClose, o
     setImagesToDelete(prev =>
       prev.includes(url) ? prev.filter(u => u !== url) : [...prev, url]
     );
+  };
+
+  // Drag and Drop Handlers
+  const handleDragStart = (e: React.DragEvent<HTMLDivElement>, index: number) => {
+    draggedItemIndex.current = index;
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault(); // Necessary to allow dropping
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>, index: number) => {
+    e.preventDefault();
+    if (draggedItemIndex.current === null || draggedItemIndex.current === index) return;
+
+    const newOrderedImages = [...orderedImages];
+    const [reorderedItem] = newOrderedImages.splice(draggedItemIndex.current, 1);
+    newOrderedImages.splice(index, 0, reorderedItem);
+
+    setOrderedImages(newOrderedImages);
+    draggedItemIndex.current = null;
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -99,7 +130,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ product, onClose, o
         }
 
         const finalImageUrls = [
-            ...product.image_urls.filter(url => !imagesToDelete.includes(url)),
+            ...orderedImages.filter(url => !imagesToDelete.includes(url)),
             ...uploadedImageUrls,
         ];
 
@@ -124,7 +155,6 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ product, onClose, o
     }
   };
 
-  const currentImages = product.image_urls || [];
 
   return (
     <div 
@@ -183,14 +213,30 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ product, onClose, o
             </div>
             
             <div className="border-t border-slate-200 pt-4 space-y-4">
-                <label className="block text-sm font-medium text-slate-600">Gerenciar Imagens</label>
-                {currentImages.length > 0 && (
-                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
-                        {currentImages.map(url => {
+                <div>
+                    <label className="block text-sm font-medium text-slate-600">Gerenciar Imagens</label>
+                    <p className="text-xs text-slate-500 mt-1">Arraste para reordenar. A primeira imagem será a principal.</p>
+                </div>
+                {orderedImages.length > 0 && (
+                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4" onDragOver={handleDragOver}>
+                        {orderedImages.map((url, index) => {
                             const isMarkedForDeletion = imagesToDelete.includes(url);
                             return (
-                                <div key={url} className="relative group">
-                                    <img src={url} alt="Imagem do produto" className={`w-full h-24 object-cover rounded-lg border-2 border-slate-200 transition-opacity ${isMarkedForDeletion ? 'opacity-40' : ''}`} />
+                                <div 
+                                    key={url} 
+                                    className={`relative group transition-opacity ${draggedItemIndex.current === index ? 'opacity-50' : ''}`}
+                                    draggable
+                                    onDragStart={(e) => handleDragStart(e, index)}
+                                    onDrop={(e) => handleDrop(e, index)}
+                                >
+                                    <div className="cursor-grab">
+                                        <img src={url} alt="Imagem do produto" className={`w-full h-24 object-cover rounded-lg border-2 border-slate-200 transition-opacity ${isMarkedForDeletion ? 'opacity-40' : ''}`} />
+                                    </div>
+                                    {index === 0 && !isMarkedForDeletion && (
+                                        <span className="absolute top-1 left-1 bg-green-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full z-10 select-none">
+                                            Principal
+                                        </span>
+                                    )}
                                     <button type="button" onClick={() => handleToggleDeleteImage(url)} className={`absolute top-1 right-1 w-7 h-7 rounded-full flex items-center justify-center text-white transition-all duration-200 ${isMarkedForDeletion ? 'bg-blue-500 hover:bg-blue-600' : 'bg-red-500 hover:bg-red-600 opacity-0 group-hover:opacity-100'}`} aria-label={isMarkedForDeletion ? 'Cancelar exclusão' : 'Marcar para excluir'}>
                                       {isMarkedForDeletion ? <UndoIcon className="h-4 w-4" /> : <TrashIcon className="h-4 w-4" />}
                                     </button>
@@ -201,7 +247,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ product, onClose, o
                     </div>
                 )}
                  <div>
-                    <label htmlFor="newImageFiles" className="block text-sm font-medium text-slate-600 mb-1">Adicionar Novas Fotos (2 a 3 recomendadas)</label>
+                    <label htmlFor="newImageFiles" className="block text-sm font-medium text-slate-600 mb-1">Adicionar Novas Fotos</label>
                     <input type="file" id="newImageFiles" onChange={e => setNewImageFiles(e.target.files)} multiple className="mt-1 block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-green-100 file:text-green-700 hover:file:bg-green-200 cursor-pointer" />
                 </div>
                  {newImagePreviews.length > 0 && (
