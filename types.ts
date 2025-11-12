@@ -4,27 +4,31 @@ export interface Product {
   codigo: string;
   name: string;
   description: string;
-  price_vista: number; // Alterado de price
-  price_cartao: number; // Novo campo
+  price_vista: number;
+  price_cartao: number;
   quantity_per_box: number;
   colors: string[];
   image_urls: string[];
   stock: number;
   created_at: string;
-  subgroup?: string; // NOVO CAMPO
+  categoria?: string; // Alterado de subgroup
+  codigo_barras?: string; // NOVO CAMPO
+  referencia_interna?: string; // NOVO CAMPO
 }
 
 export interface NewProduct {
   codigo: string;
   name: string;
   description: string;
-  price_vista: number; // Alterado de price
-  price_cartao: number; // Novo campo
+  price_vista: number;
+  price_cartao: number;
   quantity_per_box: number;
   colors: string[];
   stock: number;
   image_urls: string[];
-  subgroup?: string; // NOVO CAMPO
+  categoria?: string; // Alterado de subgroup
+  codigo_barras?: string; // NOVO CAMPO
+  referencia_interna?: string; // NOVO CAMPO
 }
 
 export interface ToastMessage {

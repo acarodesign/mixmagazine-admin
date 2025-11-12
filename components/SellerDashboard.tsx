@@ -38,7 +38,7 @@ const LogoutIcon = ({ className }: { className?: string }) => (
 );
 
 
-const SellerDashboard: React.FC<SellerDashboardProps> = ({ showToast, handleLogout, userEmail }) => {
+const SellerDashboard = ({ showToast, handleLogout, userEmail }: SellerDashboardProps) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
@@ -177,7 +177,7 @@ const SellerDashboard: React.FC<SellerDashboardProps> = ({ showToast, handleLogo
                                             </div>
                                             <div className="p-5 flex flex-col flex-grow">
                                                 <h3 className="font-bold text-lg text-slate-800 truncate">{product.name}</h3>
-                                                {product.subgroup && <p className="text-xs text-slate-500 -mt-1 truncate">{product.subgroup}</p>}
+                                                {product.categoria && <p className="text-xs text-slate-500 -mt-1 truncate">{product.categoria}</p>}
                                                 <p className="text-sm text-slate-500 font-mono mt-1">Código: {product.codigo}</p>
                                                 
                                                 <div className="mt-4 flex justify-between items-baseline">

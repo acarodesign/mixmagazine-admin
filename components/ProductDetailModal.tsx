@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import type { Product } from '../types';
+import { Product } from '../types';
 
 interface ProductDetailModalProps {
   product: Product | null;
@@ -8,7 +8,7 @@ interface ProductDetailModalProps {
   onAddToCart: (product: Product) => void;
 }
 
-const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product, onClose, onAddToCart }) => {
+const ProductDetailModal = ({ product, onClose, onAddToCart }: ProductDetailModalProps) => {
   const [selectedImage, setSelectedImage] = useState('');
 
   useEffect(() => {
@@ -61,8 +61,14 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product, onClos
             <h2 className="text-3xl font-bold text-slate-900">{product.name}</h2>
             <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-3xl transition-colors -mt-2 -mr-2">&times;</button>
           </div>
-          <p className="text-sm text-slate-500 font-mono">Código: {product.codigo}</p>
-          {product.subgroup && <p className="text-sm text-slate-500 font-mono">Subgrupo: {product.subgroup}</p>}
+          
+          <div className="text-sm text-slate-500 font-mono space-y-1">
+            <p>Código: {product.codigo}</p>
+            {product.categoria && <p>Categoria: {product.categoria}</p>}
+            {product.referencia_interna && <p>Ref. Interna: {product.referencia_interna}</p>}
+            {product.codigo_barras && <p>Cód. Barras: {product.codigo_barras}</p>}
+          </div>
+
           <p className="text-slate-600 mt-4 mb-6">{product.description || 'Sem descrição detalhada.'}</p>
           
           <div className="space-y-4 text-sm mb-6 border-t border-slate-200 pt-6">

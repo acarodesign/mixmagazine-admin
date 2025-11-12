@@ -9,7 +9,7 @@ interface ProductListProps {
   onDelete: (productId: string, imageUrls: string[]) => void;
 }
 
-const ProductList: React.FC<ProductListProps> = ({ products, loading, onEdit, onDelete }) => {
+const ProductList = ({ products, loading, onEdit, onDelete }: ProductListProps) => {
   if (loading) {
     return (
       <div className="bg-white p-6 rounded-2xl shadow-md border border-slate-200 text-center">
@@ -35,7 +35,7 @@ const ProductList: React.FC<ProductListProps> = ({ products, loading, onEdit, on
                  <div className="flex justify-between items-start">
                     <div>
                         <h3 className="font-bold text-lg text-green-600">{product.name}</h3>
-                        {product.subgroup && <p className="text-xs text-slate-500 -mt-1">{product.subgroup}</p>}
+                        {product.categoria && <p className="text-xs text-slate-500 -mt-1">{product.categoria}</p>}
                         <p className="text-sm text-slate-500 font-mono mt-1">Código: {product.codigo}</p>
                     </div>
                     <div className="text-right ml-4">

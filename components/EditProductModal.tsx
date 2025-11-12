@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import type { Product } from '../types';
 import { supabase } from '../services/supabase';
+import CategoryInput from './CategoryInput';
 
 const TrashIcon = ({ className }: { className?: string }) => (
   <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -22,30 +23,36 @@ interface EditProductModalProps {
   showToast: (message: string, type: 'success' | 'error') => void;
 }
 
-const EditProductModal: React.FC<EditProductModalProps> = ({ product, onClose, onUpdate, showToast }) => {
-  const [formData, setFormData] = useState({ ...product, colors: product.colors.join(', '), subgroup: product.subgroup || '' });
+const EditProductModal = ({ product, onClose, onUpdate, showToast }: EditProductModalProps) => {
+  const [formData, setFormData] = useState({ ...product, colors: product.colors.join(', '), categoria: product.categoria || '', codigo_barras: product.codigo_barras || '', referencia_interna: product.referencia_interna || '' });
   const [loading, setLoading] = useState(false);
   
-  // States for image management
   const [orderedImages, setOrderedImages] = useState<string[]>([]);
   const [imagesToDelete, setImagesToDelete] = useState<string[]>([]);
   const [newImageFiles, setNewImageFiles] = useState<FileList | null>(null);
   const [newImagePreviews, setNewImagePreviews] = useState<string[]>([]);
+  const [existingCategories, setExistingCategories] = useState<string[]>([]);
 
-  // Refs for drag and drop
   const draggedItemIndex = useRef<number | null>(null);
 
   useEffect(() => {
-    // Reset state when a new product is passed
-    setFormData({ ...product, colors: product.colors.join(', '), subgroup: product.subgroup || '' });
+    setFormData({ ...product, colors: product.colors.join(', '), categoria: product.categoria || '', codigo_barras: product.codigo_barras || '', referencia_interna: product.referencia_interna || '' });
     setOrderedImages(product.image_urls || []);
     setImagesToDelete([]);
     setNewImageFiles(null);
     setNewImagePreviews([]);
+
+    const fetchCategories = async () => {
+      const { data, error } = await supabase.from('produtos').select('categoria');
+      if (data && !error) {
+        const uniqueCategories = [...new Set(data.map(item => item.categoria).filter(Boolean))] as string[];
+        setExistingCategories(uniqueCategories.sort());
+      }
+    };
+    fetchCategories();
   }, [product]);
 
   useEffect(() => {
-    // Create preview URLs for new images
     if (!newImageFiles || newImageFiles.length === 0) {
       setNewImagePreviews([]);
       return;
@@ -68,14 +75,13 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ product, onClose, o
     );
   };
 
-  // Drag and Drop Handlers
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>, index: number) => {
     draggedItemIndex.current = index;
     e.dataTransfer.effectAllowed = 'move';
   };
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault(); // Necessary to allow dropping
+    e.preventDefault();
   };
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>, index: number) => {
@@ -136,7 +142,9 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ product, onClose, o
 
         const dataToUpdate: Product = {
             ...formData,
-            subgroup: formData.subgroup.trim() || undefined,
+            categoria: formData.categoria.trim() || undefined,
+            codigo_barras: formData.codigo_barras.trim() || undefined,
+            referencia_interna: formData.referencia_interna.trim() || undefined,
             price_vista: parseFloat(String(formData.price_vista)),
             price_cartao: parseFloat(String(formData.price_cartao)),
             stock: parseInt(String(formData.stock), 10),
@@ -180,8 +188,23 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ product, onClose, o
               <input type="text" id="edit-name" name="name" value={formData.name} onChange={handleChange} required className="appearance-none relative block w-full px-4 py-3 border border-slate-300 bg-slate-100 placeholder-slate-400 text-slate-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm transition-all duration-300" />
             </div>
             <div>
-              <label htmlFor="edit-subgroup" className="block text-sm font-medium text-slate-600 mb-1">Subgrupo (Opcional)</label>
-              <input type="text" id="edit-subgroup" name="subgroup" value={formData.subgroup} onChange={handleChange} className="appearance-none relative block w-full px-4 py-3 border border-slate-300 bg-slate-100 placeholder-slate-400 text-slate-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm transition-all duration-300" />
+              <label htmlFor="edit-categoria" className="block text-sm font-medium text-slate-600 mb-1">Categoria (Opcional)</label>
+              <CategoryInput
+                value={formData.categoria}
+                onChange={(newCategory) => setFormData(prev => ({ ...prev, categoria: newCategory }))}
+                existingCategories={existingCategories}
+                placeholder="Digite ou selecione uma categoria"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="edit-codigo_barras" className="block text-sm font-medium text-slate-600 mb-1">Código de Barras (Opcional)</label>
+                <input type="text" id="edit-codigo_barras" name="codigo_barras" value={formData.codigo_barras} onChange={handleChange} className="appearance-none relative block w-full px-4 py-3 border border-slate-300 bg-slate-100 placeholder-slate-400 text-slate-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm transition-all duration-300" />
+              </div>
+              <div>
+                <label htmlFor="edit-referencia_interna" className="block text-sm font-medium text-slate-600 mb-1">Referência Interna (Opcional)</label>
+                <input type="text" id="edit-referencia_interna" name="referencia_interna" value={formData.referencia_interna} onChange={handleChange} className="appearance-none relative block w-full px-4 py-3 border border-slate-300 bg-slate-100 placeholder-slate-400 text-slate-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm transition-all duration-300" />
+              </div>
             </div>
             <div>
               <label htmlFor="edit-description" className="block text-sm font-medium text-slate-600 mb-1">Descrição</label>

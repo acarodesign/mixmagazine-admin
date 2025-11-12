@@ -2,16 +2,19 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../services/supabase';
 import type { NewProduct } from '../types';
+import CategoryInput from './CategoryInput';
 
 interface ProductFormProps {
   showToast: (message: string, type: 'success' | 'error') => void;
   onProductAdded: () => void;
 }
 
-const ProductForm: React.FC<ProductFormProps> = ({ showToast, onProductAdded }) => {
+const ProductForm = ({ showToast, onProductAdded }: ProductFormProps) => {
   const [codigo, setCodigo] = useState('');
   const [name, setName] = useState('');
-  const [subgroup, setSubgroup] = useState(''); // NOVO ESTADO
+  const [categoria, setCategoria] = useState('');
+  const [codigoBarras, setCodigoBarras] = useState('');
+  const [referenciaInterna, setReferenciaInterna] = useState('');
   const [description, setDescription] = useState('');
   const [priceVista, setPriceVista] = useState('');
   const [priceCartao, setPriceCartao] = useState('');
@@ -21,6 +24,19 @@ const ProductForm: React.FC<ProductFormProps> = ({ showToast, onProductAdded }) 
   const [imageFiles, setImageFiles] = useState<FileList | null>(null);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [existingCategories, setExistingCategories] = useState<string[]>([]);
+
+  useEffect(() => {
+    // Busca categorias existentes para o datalist
+    const fetchCategories = async () => {
+      const { data, error } = await supabase.from('produtos').select('categoria');
+      if (data && !error) {
+        const uniqueCategories = [...new Set(data.map(item => item.categoria).filter(Boolean))] as string[];
+        setExistingCategories(uniqueCategories.sort());
+      }
+    };
+    fetchCategories();
+  }, []);
 
   useEffect(() => {
     if (!imageFiles || imageFiles.length === 0) {
@@ -28,7 +44,6 @@ const ProductForm: React.FC<ProductFormProps> = ({ showToast, onProductAdded }) 
       return;
     }
 
-    // FIX: Cast file to Blob for URL.createObjectURL, as File is a subclass of Blob.
     const newImagePreviews = Array.from(imageFiles).map(file => URL.createObjectURL(file as Blob));
     setImagePreviews(newImagePreviews);
 
@@ -41,7 +56,9 @@ const ProductForm: React.FC<ProductFormProps> = ({ showToast, onProductAdded }) 
   const resetForm = () => {
     setCodigo('');
     setName('');
-    setSubgroup(''); // LIMPAR SUBGRUPO
+    setCategoria('');
+    setCodigoBarras('');
+    setReferenciaInterna('');
     setDescription('');
     setPriceVista('');
     setPriceCartao('');
@@ -71,7 +88,6 @@ const ProductForm: React.FC<ProductFormProps> = ({ showToast, onProductAdded }) 
 
     try {
       const uploadedImageUrls: string[] = [];
-      // FIX: Cast Array.from(imageFiles) to File[] to correctly type `file` inside the loop.
       for (const file of Array.from(imageFiles) as File[]) {
         const fileExt = file.name.split('.').pop();
         const fileName = `${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
@@ -93,7 +109,9 @@ const ProductForm: React.FC<ProductFormProps> = ({ showToast, onProductAdded }) 
       const newProduct: NewProduct = {
         codigo,
         name,
-        subgroup: subgroup.trim() || undefined, // ADICIONAR SUBGRUPO
+        categoria: categoria.trim() || undefined,
+        codigo_barras: codigoBarras.trim() || undefined,
+        referencia_interna: referenciaInterna.trim() || undefined,
         description,
         price_vista: parseFloat(priceVista),
         price_cartao: parseFloat(priceCartao),
@@ -141,8 +159,23 @@ const ProductForm: React.FC<ProductFormProps> = ({ showToast, onProductAdded }) 
           <input type="text" id="name" value={name} onChange={e => setName(e.target.value)} required className="appearance-none relative block w-full px-4 py-3 border border-slate-300 bg-slate-100 placeholder-slate-400 text-slate-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm transition-all duration-300" />
         </div>
         <div>
-          <label htmlFor="subgroup" className="block text-sm font-medium text-slate-600 mb-1">Subgrupo (Opcional)</label>
-          <input type="text" id="subgroup" value={subgroup} onChange={e => setSubgroup(e.target.value)} placeholder="Ex: Papai Noel Roupa Vermelha" className="appearance-none relative block w-full px-4 py-3 border border-slate-300 bg-slate-100 placeholder-slate-400 text-slate-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm transition-all duration-300" />
+          <label htmlFor="categoria" className="block text-sm font-medium text-slate-600 mb-1">Categoria (Opcional)</label>
+          <CategoryInput
+            value={categoria}
+            onChange={setCategoria}
+            existingCategories={existingCategories}
+            placeholder="Digite ou selecione uma categoria"
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label htmlFor="codigoBarras" className="block text-sm font-medium text-slate-600 mb-1">Código de Barras (Opcional)</label>
+            <input type="text" id="codigoBarras" value={codigoBarras} onChange={e => setCodigoBarras(e.target.value)} placeholder="Ex: 789..." className="appearance-none relative block w-full px-4 py-3 border border-slate-300 bg-slate-100 placeholder-slate-400 text-slate-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm transition-all duration-300" />
+          </div>
+          <div>
+            <label htmlFor="referenciaInterna" className="block text-sm font-medium text-slate-600 mb-1">Referência Interna (Opcional)</label>
+            <input type="text" id="referenciaInterna" value={referenciaInterna} onChange={e => setReferenciaInterna(e.target.value)} placeholder="Ex: NATAL-001" className="appearance-none relative block w-full px-4 py-3 border border-slate-300 bg-slate-100 placeholder-slate-400 text-slate-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm transition-all duration-300" />
+          </div>
         </div>
         <div>
           <label htmlFor="description" className="block text-sm font-medium text-slate-600 mb-1">Descrição</label>
